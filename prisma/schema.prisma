@@ -5,8 +5,8 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
+  // output   = "../generated/prisma"
 }
 
 datasource db {
@@ -21,7 +21,7 @@ model Employee {
   role        String
   // Role        Role
   createdAt   DateTime @default(now())
-  updatedAt   DateTime 
+  updatedAt   DateTime @updatedAt
 
   // @@check(role IN ('Admin', 'Intern'))
 }
