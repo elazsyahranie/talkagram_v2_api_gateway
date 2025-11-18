@@ -97,6 +97,16 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE). 
 
-## Some notes 
-`npx prisma migrate dev --name` or `npx prisma migrate dev --name` to migrate
-`npx prisma generate` automatically generate models based on the schema.prisma
+## Some notes on Prisma
+- `npx prisma init`
+  This will execute three things:
+  - Creates a new directory called prisma that contains a file called schema.prisma, which contains the Prisma Schema with your database connection variable and schema models.
+  - Sets the datasource to PostgreSQL and the output to a custom location, respectively.
+  - Creates the .env file in the root directory of the project, which is used for defining environment variables (such as your database connection)
+
+Afterwards, you can execute `npx prisma migrate dev --name` or `npx prisma migrate dev --name [name]` to create migrations (and automatically execute them) based on the schema.prisma file
+
+- `npx prisma generate` generates the prisma client file
+
+### On migrations 
+You would only need to edit your `prisma.schema` file, and then enter `npx prisma generate` to generate
