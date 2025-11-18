@@ -104,9 +104,14 @@ Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
   - Sets the datasource to PostgreSQL and the output to a custom location, respectively.
   - Creates the .env file in the root directory of the project, which is used for defining environment variables (such as your database connection)
 
-Afterwards, you can execute `npx prisma migrate dev --name` or `npx prisma migrate dev --name [name]` to create migrations (and automatically execute them) based on the schema.prisma file
+Afterwards, you can 
+- `npx prisma migrate dev` apply existing migrations only
+- `npx prisma migrate dev --name [name]` create migration and apply it
+- `npx prisma migate dev --name [name] --create-only` would create the migration file WITHOUT migrating it (so you can edit the query as you need)
+NOTE: You can set 
 
-- `npx prisma generate` generates the prisma client file
+To generate prisma client file, you can execute
+- `npx prisma generate`
 
 ### On migrations 
 You would only need to edit your `prisma.schema` file, and then enter `npx prisma generate` to generate
