@@ -108,7 +108,6 @@ Afterwards, you can
 - `npx prisma migrate dev` apply existing migrations only
 - `npx prisma migrate dev --name [name]` create migration and apply it
 - `npx prisma migate dev --name [name] --create-only` would create the migration file WITHOUT migrating it (so you can edit the query as you need)
-NOTE: You can set 
 
 To generate prisma client file, you can execute
 - `npx prisma generate`
