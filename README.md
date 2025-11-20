@@ -111,6 +111,7 @@ Afterwards, you can
 
 To generate prisma client file, you can execute
 - `npx prisma generate`
+  This would automatically generate models based on your prisma.schema file, which you can use as types for request bodies to your controllers
 
 ### On migrations 
 You would only need to edit your `prisma.schema` file, and then enter `npx prisma generate` to generate
