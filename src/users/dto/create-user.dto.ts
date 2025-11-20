@@ -9,7 +9,7 @@ export class CreateUserDto {
     @IsNotEmpty()
     email: string;
 
-    @IsEnum(['Admin', 'Intern'], {
+    @IsEnum(['Super Admin', 'Intern'], {
         message: "Valid role required!"
     })
     role: 'Admin' | 'Intern'

@@ -1,119 +1,153 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, HttpException } from '@nestjs/common';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { CreateUserDto } from './dto/create-user.dto';
+// import { CreateUserDto } from './dto/create-user.dto';
+import { Prisma } from '@prisma/client';
+import { DatabaseService } from 'src/database/database.service';
+import { ValidationService } from '../common/validation.service';
+import { UserValidation } from './users.validation';
+import * as bcrypt from 'bcrypt';
+// import { LoginUserRequest, RegisterUserRequest } from 'src/models/users.model';
+import { JwtService } from '@nestjs/jwt';
+import { LoginUserDto } from './dto/login-user.dto';
 
 @Injectable()
 export class UsersService {
-  private users = [
-    {
-      id: 1,
-      name: 'Alice Johnson',
-      email: 'alice.johnson@example.com',
-      role: 'Admin',
-    },
-    {
-      id: 2,
-      name: 'Brian Lee',
-      email: 'brian.lee@example.com',
-      role: 'Intern',
-    },
-    {
-      id: 3,
-      name: 'Clara Smith',
-      email: 'clara.smith@example.com',
-      role: 'Admin',
-    },
-    {
-      id: 4,
-      name: 'David Nguyen',
-      email: 'david.nguyen@example.com',
-      role: 'Intern',
-    },
-    {
-      id: 5,
-      name: 'Ella Martinez',
-      email: 'ella.martinez@example.com',
-      role: 'Admin',
-    },
-    {
-      id: 6,
-      name: 'Felix Anderson',
-      email: 'felix.anderson@example.com',
-      role: 'Intern',
-    },
-    { id: 7, name: 'Grace Kim', email: 'grace.kim@example.com', role: 'Admin' },
-    {
-      id: 8,
-      name: 'Henry Brown',
-      email: 'henry.brown@example.com',
-      role: 'Intern',
-    },
-    {
-      id: 9,
-      name: 'Ivy Wilson',
-      email: 'ivy.wilson@example.com',
-      role: 'Admin',
-    },
-    {
-      id: 10,
-      name: 'Jack Davis',
-      email: 'jack.davis@example.com',
-      role: 'Intern',
-    },
-  ];
+  constructor(
+    private validationService: ValidationService,
+    private jwtService: JwtService,
+    private readonly databaseService: DatabaseService,
+  ) {}
 
-  findAll(keywords?: string, role?: 'Intern' | 'Admin') {
-    if (keywords) {
-      const data = this.users.filter((user) => user.name === keywords);
-      if (!data.length) {
-        throw new NotFoundException('User not found!');
-      }
-      return data;
+  async create(requestBody: Prisma.UsersCreateInput) {
+    this.validationService.validate(UserValidation.REGISTER, requestBody);
+
+    const emailDuplicate = await this.databaseService.users.count({
+      where: {
+        email: requestBody.email,
+      },
+    });
+    if (emailDuplicate != 0) {
+      throw new HttpException('Email already used!', 409);
     }
-    if (role) {
-      const data = this.users.filter((user) => user.role === role);
-      if (!data.length) {
-        throw new NotFoundException('User not found!');
-      }
-      return data;
-    }
-    return this.users;
-  }
 
-  findOne(id: number) {
-    const user = this.users.find((user) => user.id === id);
-    if (!user) throw new NotFoundException('User not found!');
+    requestBody.password = await bcrypt.hash(requestBody.password, 10);
 
-    return user;
-  }
-
-  create(user: CreateUserDto) {
-    const userByHighestId = [...this.users].sort((a, b) => b.id - a.id);
-    const newUser = {
-      id: userByHighestId[0].id + 1,
-      ...user,
-    };
-    this.users.push(newUser);
-    return newUser;
-  }
-
-  update(id: number, updatedUser: UpdateUserDto) {
-    this.users = this.users.map((user) => {
-      if (user.id === id) {
-        console.log(user);
-        return { ...user, ...updatedUser };
-      }
-      return user;
+    const createUser = await this.databaseService.users.create({
+      data: requestBody,
     });
 
-    return this.findOne(id);
+    return { name: createUser.name, email: createUser.email };
   }
 
-  delete(id: number) {
-    const removedUser = this.findOne(id);
+  async login(requestBody: LoginUserDto) {
+    this.validationService.validate(UserValidation.LOGIN, requestBody);
 
-    this.users = this.users.filter((user) => user.id !== id);
+    let findUser = await this.databaseService.users.findFirst({
+      where: {
+        email: requestBody.email,
+      },
+    });
+    if (!findUser) {
+      throw new HttpException('No user found!', 404);
+    }
 
-    return removedUser;
+    const isPasswordValid = await bcrypt.compare(
+      requestBody.password,
+      findUser.password,
+    );
+    if (!isPasswordValid) {
+      throw new HttpException('Password invalid!', 401);
+    }
+
+    const token = await this.jwtService.signAsync({
+      id: findUser.id,
+      name: findUser.name,
+      role: findUser.role,
+      email: findUser.email,
+    });
+
+    return {
+      name: findUser.name,
+      email: findUser.email,
+      token,
+    };
+  }
+
+  async findAll(keywords?: string, role?: 'Intern' | 'Admin') {
+    const where: Prisma.UsersWhereInput = {};
+    if (keywords)
+      where.name = {
+        contains: 'john',
+        mode: 'insensitive', // ILIKE '%john%'
+      };
+    if (role) {
+      where.role = role;
+    }
+    const result = await this.databaseService.users.findMany({
+      where,
+      omit: { password: true, createdAt: true, updatedAt: true },
+    });
+    if (!result) {
+      throw new NotFoundException(404, 'User not found!');
+    }
+
+    return {
+      data: result,
+    };
+  }
+
+  async findOne(id: number) {
+    const data = await this.databaseService.users.findUnique({
+      where: { id },
+      omit: { password: true, createdAt: true, updatedAt: true },
+    });
+    if (!data) {
+      throw new NotFoundException(404, 'User not found!');
+    }
+
+    return {
+      data: data,
+    };
+  }
+
+  async update(id: number, user: Prisma.UsersUpdateInput) {
+    const findUser = await this.databaseService.users.count({
+      where: {
+        id,
+      },
+    });
+    if (findUser === 0) {
+      throw new HttpException('User not found!', 404);
+    }
+
+    this.validationService.validate(UserValidation.UPDATE, user);
+
+    await this.databaseService.users.update({
+      where: { id },
+      data: user,
+    });
+
+    return {
+      status: 'success',
+    };
+  }
+
+  async delete(id: number) {
+    const findUser = await this.databaseService.users.count({
+      where: {
+        id,
+      },
+    });
+    if (findUser === 0) {
+      throw new HttpException('User not found!', 404);
+    }
+
+    await this.databaseService.users.delete({
+      where: {
+        id,
+      },
+    });
+
+    return { status: 'success' };
   }
 }
