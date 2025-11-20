@@ -9,7 +9,7 @@ import * as bcrypt from 'bcrypt';
 // import { LoginUserRequest, RegisterUserRequest } from 'src/models/users.model';
 import { JwtService } from '@nestjs/jwt';
 import { LoginUserDto } from './dto/login-user.dto';
-import { v4 as uuidv4 } from 'uuid';
+// import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class UsersService {
@@ -102,6 +102,29 @@ export class UsersService {
   }
 
   async findAll(keywords?: string, role?: 'Intern' | 'Admin') {
+    const where: Prisma.UsersWhereInput = {};
+    if (keywords)
+      where.name = {
+        contains: 'john',
+        mode: 'insensitive', // ILIKE '%john%'
+      };
+    if (role) {
+      where.role = role;
+    }
+    const result = await this.databaseService.users.findMany({
+      where,
+      omit: { password: true, createdAt: true, updatedAt: true },
+    });
+    if (!result) {
+      throw new NotFoundException(404, 'User not found!');
+    }
+
+    return {
+      data: result,
+    };
+  }
+
+  async findAllWithCompanies(keywords?: string, role?: 'Intern' | 'Admin') {
     const where: Prisma.UsersWhereInput = {};
     if (keywords)
       where.name = {

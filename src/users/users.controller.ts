@@ -14,23 +14,15 @@ import {
   Req,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-// import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-// import { Users } from '@prisma/client';
 import { MyLoggerService } from 'src/my-logger/my-logger.service';
-// import { RegisterUserRequest, LoginUserRequest } from 'src/models/users.model';
 import { AuthGuard } from 'src/auth/auth.guard';
-// import { Prisma } from 'generated/prisma/browser';
 import { Prisma } from '@prisma/client';
 import { LoginUserDto } from './dto/login-user.dto';
 
 @Controller('users')
 export class UsersController {
-  constructor(
-    private readonly usersService: UsersService,
-    // private readonly authGuard: AuthGuard,
-  ) {}
-  private readonly logger = new MyLoggerService(UsersController.name);
+  constructor(private readonly usersService: UsersService) {}
+  // private readonly logger = new MyLoggerService(UsersController.name);
 
   @Post('/login')
   @HttpCode(200)

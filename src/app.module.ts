@@ -9,6 +9,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { MyLoggerModule } from './my-logger/my-logger.module';
 import { CommonModule } from './common/common.module';
 import { AuthModule } from './auth/auth.module';
+import { CompaniesModule } from './companies/companies.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { AuthModule } from './auth/auth.module';
     // ]),
     MyLoggerModule,
     AuthModule,
+    CompaniesModule,
   ],
   controllers: [AppController],
   providers: [
