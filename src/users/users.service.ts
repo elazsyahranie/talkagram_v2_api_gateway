@@ -101,12 +101,12 @@ export class UsersService {
     };
   }
 
-  async findAll(keywords?: string, role?: 'Intern' | 'Admin') {
+  async findAll(keywords?: string, role?: 'Admin' | 'User') {
     const where: Prisma.UsersWhereInput = {};
     if (keywords)
       where.name = {
-        contains: 'john',
-        mode: 'insensitive', // ILIKE '%john%'
+        contains: keywords,
+        mode: 'insensitive',
       };
     if (role) {
       where.role = role;
@@ -124,26 +124,42 @@ export class UsersService {
     };
   }
 
-  async findAllWithCompanies(keywords?: string, role?: 'Intern' | 'Admin') {
+  async findAllWithCompanies(keywords?: string, role?: 'Admin' | 'User') {
     const where: Prisma.UsersWhereInput = {};
     if (keywords)
       where.name = {
-        contains: 'john',
-        mode: 'insensitive', // ILIKE '%john%'
+        contains: keywords,
+        mode: 'insensitive',
       };
     if (role) {
       where.role = role;
     }
+    where.company = { isNot: null };
     const result = await this.databaseService.users.findMany({
       where,
       omit: { password: true, createdAt: true, updatedAt: true },
+      include: {
+        company: true,
+      },
     });
     if (!result) {
-      throw new NotFoundException(404, 'User not found!');
+      throw new NotFoundException(404, 'Not found!');
     }
 
+    const returnedResult = result.map((obj) => {
+      return {
+        user_id: obj.id,
+        company_id: obj.company?.id,
+        nama: obj.name,
+        email: obj.email,
+        telp: obj.phone,
+        company_code: obj.company?.code,
+        company_name: obj.company?.name,
+      };
+    });
+
     return {
-      data: result,
+      data: returnedResult,
     };
   }
 
