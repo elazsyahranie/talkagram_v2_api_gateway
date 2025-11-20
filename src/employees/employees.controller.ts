@@ -12,7 +12,7 @@ import {
 import { EmployeesService } from './employees.service';
 import { Prisma } from '@prisma/client';
 import { SkipThrottle, Throttle } from '@nestjs/throttler';
-import { MyLoggerService } from 'src/my-logger/my-logger.service';
+// import { MyLoggerService } from 'src/my-logger/my-logger.service';
 // import type { EmployeeCreateInput } from 'generated/prisma/models';
 // import { CreateEmployeeDto } from './dto/create-employee.dto';
 // import { CreateEmployeeDto } from './dto/create-employee.dto';
@@ -22,20 +22,23 @@ import { MyLoggerService } from 'src/my-logger/my-logger.service';
 @Controller('employees')
 export class EmployeesController {
   constructor(private readonly employeesService: EmployeesService) {}
-  private readonly logger = new MyLoggerService(EmployeesController.name);
+  // private readonly logger = new MyLoggerService(EmployeesController.name);
   @Post()
   create(@Body() createEmployeeDto: Prisma.EmployeeCreateInput) {
     return this.employeesService.create(createEmployeeDto);
   }
 
-  @SkipThrottle({ default: false }) // ...except for this one
+  // @SkipThrottle({ default: false }) // ...except for this one
   @Get()
   findAll(@Ip() ip: string, @Query('role') role?: 'Admin' | 'Intern') {
-    this.logger.log(`Request for ALL Employees\t${ip}`, EmployeesController.name);
+    // this.logger.log(
+    //   `Request for ALL Employees\t${ip}`,
+    //   EmployeesController.name,
+    // );
     return this.employeesService.findAll(role);
   }
 
-  @Throttle({ short: { ttl: 1000, limit: 1 } }) // Would overwrite the 'short' throttle configuration set at the app.module.ts
+  // @Throttle({ short: { ttl: 1000, limit: 1 } }) // Would overwrite the 'short' throttle configuration set at the app.module.ts
   // @Throttle({ default: { ttl: 1000, limit: 1 } }) // Or you could overwrite the 'default' that has been set above
   @Get(':id')
   findOne(@Param('id') id: string) {

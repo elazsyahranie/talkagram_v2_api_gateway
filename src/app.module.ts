@@ -16,14 +16,17 @@ import { AuthModule } from './auth/auth.module';
     DatabaseModule,
     EmployeesModule,
     CommonModule,
-    ThrottlerModule.forRoot([
-      { name: 'short', ttl: 1000, limit: 3 },
-      { name: 'long', ttl: 60000, limit: 3 },
-    ]),
+    // ThrottlerModule.forRoot([
+    //   { name: 'short', ttl: 1000, limit: 3 },
+    //   { name: 'long', ttl: 60000, limit: 3 },
+    // ]),
     MyLoggerModule,
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
+  providers: [
+    AppService,
+    // { provide: APP_GUARD, useClass: ThrottlerGuard } Activates the throttle
+  ],
 })
 export class AppModule {}

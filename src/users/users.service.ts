@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, HttpException } from '@nestjs/common';
-import { UpdateUserDto } from './dto/update-user.dto';
+// import { UpdateUserDto } from './dto/update-user.dto';
 // import { CreateUserDto } from './dto/create-user.dto';
 import { Prisma } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
@@ -9,6 +9,7 @@ import * as bcrypt from 'bcrypt';
 // import { LoginUserRequest, RegisterUserRequest } from 'src/models/users.model';
 import { JwtService } from '@nestjs/jwt';
 import { LoginUserDto } from './dto/login-user.dto';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class UsersService {
@@ -21,14 +22,31 @@ export class UsersService {
   async create(requestBody: Prisma.UsersCreateInput) {
     this.validationService.validate(UserValidation.REGISTER, requestBody);
 
-    const emailDuplicate = await this.databaseService.users.count({
-      where: {
-        email: requestBody.email,
-      },
-    });
-    if (emailDuplicate != 0) {
+    const [emailDuplicate, usernameDuplicate, phoneDuplicate] =
+      await Promise.all([
+        this.databaseService.users.count({
+          where: {
+            email: requestBody.email,
+          },
+        }),
+        this.databaseService.users.count({
+          where: {
+            username: requestBody.username,
+          },
+        }),
+        this.databaseService.users.count({
+          where: {
+            phone: requestBody.phone,
+          },
+        }),
+      ]);
+
+    if (emailDuplicate != 0)
       throw new HttpException('Email already used!', 409);
-    }
+    if (usernameDuplicate != 0)
+      throw new HttpException('Username already used!', 409);
+    if (phoneDuplicate != 0)
+      throw new HttpException('Phone already used!', 409);
 
     requestBody.password = await bcrypt.hash(requestBody.password, 10);
 
@@ -44,7 +62,17 @@ export class UsersService {
 
     let findUser = await this.databaseService.users.findFirst({
       where: {
-        email: requestBody.email,
+        OR: [
+          {
+            email: requestBody.email,
+          },
+          {
+            phone: requestBody.phone,
+          },
+          {
+            username: requestBody.username,
+          },
+        ],
       },
     });
     if (!findUser) {
@@ -96,7 +124,7 @@ export class UsersService {
     };
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const data = await this.databaseService.users.findUnique({
       where: { id },
       omit: { password: true, createdAt: true, updatedAt: true },
@@ -110,7 +138,7 @@ export class UsersService {
     };
   }
 
-  async update(id: number, user: Prisma.UsersUpdateInput) {
+  async update(id: string, user: Prisma.UsersUpdateInput) {
     const findUser = await this.databaseService.users.count({
       where: {
         id,
@@ -132,7 +160,7 @@ export class UsersService {
     };
   }
 
-  async delete(id: number) {
+  async delete(id: string) {
     const findUser = await this.databaseService.users.count({
       where: {
         id,
