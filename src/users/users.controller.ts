@@ -49,9 +49,7 @@ export class UsersController {
 
   @Get()
   @HttpCode(200)
-  findAllWithCompanies(
-    @Query() query: { keywords?: string; role?: 'Admin' | 'User' },
-  ) {
+  findAll(@Query() query: { keywords?: string; role?: 'Admin' | 'User' }) {
     return this.usersService.findAll(query.keywords, query.role);
   }
 
