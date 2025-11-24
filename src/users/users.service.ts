@@ -20,8 +20,6 @@ export class UsersService {
   ) {}
 
   async create(requestBody: Prisma.UsersCreateInput) {
-    this.validationService.validate(UserValidation.REGISTER, requestBody);
-
     const [emailDuplicate, usernameDuplicate, phoneDuplicate] =
       await Promise.all([
         this.databaseService.users.count({
@@ -48,7 +46,13 @@ export class UsersService {
     if (phoneDuplicate != 0)
       throw new HttpException('Phone already used!', 409);
 
+    let { first_name, middle_name, last_name } = requestBody;
+    requestBody.name =
+      `${first_name ? first_name : ''} ${middle_name ? middle_name : ''} ${last_name ? last_name : ''}`.trim();
+
     requestBody.password = await bcrypt.hash(requestBody.password, 10);
+
+    this.validationService.validate(UserValidation.REGISTER, requestBody);
 
     const createUser = await this.databaseService.users.create({
       data: requestBody,
@@ -101,6 +105,29 @@ export class UsersService {
     };
   }
 
+  // async findAll(keywords?: string, role?: 'Admin' | 'User') {
+  //   const where: Prisma.UsersWhereInput = {};
+  //   if (keywords)
+  //     where.name = {
+  //       contains: keywords,
+  //       mode: 'insensitive',
+  //     };
+  //   if (role) {
+  //     where.role = role;
+  //   }
+  //   const result = await this.databaseService.users.findMany({
+  //     where,
+  //     omit: { password: true, createdAt: true, updatedAt: true },
+  //   });
+  //   if (!result) {
+  //     throw new NotFoundException(404, 'User not found!');
+  //   }
+
+  //   return {
+  //     data: result,
+  //   };
+  // }
+
   async findAll(keywords?: string, role?: 'Admin' | 'User') {
     const where: Prisma.UsersWhereInput = {};
     if (keywords)
@@ -111,30 +138,7 @@ export class UsersService {
     if (role) {
       where.role = role;
     }
-    const result = await this.databaseService.users.findMany({
-      where,
-      omit: { password: true, createdAt: true, updatedAt: true },
-    });
-    if (!result) {
-      throw new NotFoundException(404, 'User not found!');
-    }
-
-    return {
-      data: result,
-    };
-  }
-
-  async findAllWithCompanies(keywords?: string, role?: 'Admin' | 'User') {
-    const where: Prisma.UsersWhereInput = {};
-    if (keywords)
-      where.name = {
-        contains: keywords,
-        mode: 'insensitive',
-      };
-    if (role) {
-      where.role = role;
-    }
-    where.company = { isNot: null };
+    // where.company = { isNot: null };
     const result = await this.databaseService.users.findMany({
       where,
       omit: { password: true, createdAt: true, updatedAt: true },
@@ -146,20 +150,20 @@ export class UsersService {
       throw new NotFoundException(404, 'Not found!');
     }
 
-    const returnedResult = result.map((obj) => {
-      return {
-        user_id: obj.id,
-        company_id: obj.company?.id,
-        nama: obj.name,
-        email: obj.email,
-        telp: obj.phone,
-        company_code: obj.company?.code,
-        company_name: obj.company?.name,
-      };
-    });
+    // const returnedResult = result.map((obj) => {
+    //   return {
+    //     user_id: obj.id,
+    //     company_id: obj.company ? obj.company.id : '',
+    //     nama: obj.name,
+    //     email: obj.email,
+    //     telp: obj.phone,
+    //     company_code: obj.company ? obj.company.code : '',
+    //     company_name: obj.company ? obj.company.name : '',
+    //   };
+    // });
 
     return {
-      data: returnedResult,
+      data: result,
     };
   }
 
@@ -178,14 +182,21 @@ export class UsersService {
   }
 
   async update(id: string, user: Prisma.UsersUpdateInput) {
-    const findUser = await this.databaseService.users.count({
+    const findUser = await this.databaseService.users.findUnique({
       where: {
         id,
       },
     });
-    if (findUser === 0) {
+    if (!findUser) {
       throw new HttpException('User not found!', 404);
     }
+
+    let { first_name, middle_name, last_name } = user;
+    user.name =
+      `${first_name ? first_name : findUser.first_name ? findUser.first_name : ''} ${middle_name ? middle_name : findUser.middle_name ? findUser.middle_name : ''} ${last_name ? last_name : findUser.last_name ? findUser.last_name : ''}`.trim();
+
+    // Update password only if it's sent
+    if (user.password) user.password = await bcrypt.hash(user.password, 10);
 
     this.validationService.validate(UserValidation.UPDATE, user);
 

@@ -2,7 +2,7 @@ import { z, ZodType } from 'zod';
 
 export class UserValidation {
   static readonly REGISTER: ZodType = z.object({
-    name: z.string().min(1).max(100),
+    name: z.string('Name is required!').min(1, 'Name is required!').max(100),
     password: z.string('Password is required!').min(1).max(100),
     username: z.string('Username is required!').min(1).max(100),
     phone: z.string('Phone is required!').min(1).max(100),

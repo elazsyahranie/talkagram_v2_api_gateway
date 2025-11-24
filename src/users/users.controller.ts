@@ -55,11 +55,11 @@ export class UsersController {
     return this.usersService.findAll(query.keywords, query.role);
   }
 
-  @Get('/companies')
-  @HttpCode(200)
-  findAll(@Query() query: { keywords?: string; role?: 'Admin' | 'User' }) {
-    return this.usersService.findAllWithCompanies(query.keywords, query.role);
-  }
+  // @Get('/companies')
+  // @HttpCode(200)
+  // findAll(@Query() query: { keywords?: string; role?: 'Admin' | 'User' }) {
+  //   return this.usersService.findAllWithCompanies(query.keywords, query.role);
+  // }
 
   // ParseIntPipe
   @Get(':id')
