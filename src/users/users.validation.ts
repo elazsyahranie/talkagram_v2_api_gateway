@@ -14,12 +14,17 @@ export class UserValidation {
     about: z.string().min(1).max(100).optional(),
   });
 
-  static readonly LOGIN: ZodType = z.object({
-    password: z.string('Password is required!').min(1).max(100),
-    email: z.string().min(1).max(100).optional(),
-    phone: z.string().min(1).max(100).optional(),
-    username: z.string().min(1).max(100).optional(),
-  });
+  static readonly LOGIN: ZodType = z
+    .object({
+      password: z.string('Password is required!').min(1).max(100),
+      email: z.string().min(1).max(100).optional(),
+      phone: z.string().min(1).max(100).optional(),
+      username: z.string().min(1).max(100).optional(),
+    })
+    .refine((data) => data.email || data.phone || data.username, {
+      message: 'Either email, phone, or username is required.',
+      path: ['email', 'phone', 'username'], // you can put [] or pick a field
+    });
 
   static readonly UPDATE: ZodType = z.object({
     name: z.string().min(1).max(100).optional(),
