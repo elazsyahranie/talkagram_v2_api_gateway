@@ -1,5 +1,4 @@
 import { Injectable, BadGatewayException } from '@nestjs/common';
-import { map } from 'zod';
 import { externalApiResponse, finalResultType } from './external-api.interface';
 
 @Injectable()

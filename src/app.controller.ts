@@ -1,6 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { AppService } from './app.service';
-import { externalApiResponse, finalResultType } from './external-api.interface';
+import { finalResultType } from './external-api.interface';
 
 @Controller()
 export class AppController {
