@@ -2,7 +2,8 @@ import { NestFactory, HttpAdapterHost } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as dotenv from 'dotenv';
 import { MyLoggerService } from './my-logger/my-logger.service';
-import { AllExceptionFilter } from './all-exceptions.filter';
+// import { AllExceptionFilter } from './all-exceptions.filter';
+import { ExceptionsFilter } from './common/exceptions.filter';
 dotenv.config();
 
 async function bootstrap() {
@@ -14,7 +15,7 @@ async function bootstrap() {
   );
 
   const { httpAdapter } = app.get(HttpAdapterHost);
-  app.useGlobalFilters(new AllExceptionFilter(httpAdapter)); 
+  app.useGlobalFilters(new ExceptionsFilter(httpAdapter));
   /* 
     1) Masih harus diperiksa kenapa file untuk menyimpan log nya tidak muncul 
     2) Tambahkan exception lain, misalkan kalau data tidak ada kirimkan error, atau kalau email sudah ada kirimkan error
