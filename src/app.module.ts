@@ -10,18 +10,22 @@ import { MyLoggerModule } from './my-logger/my-logger.module';
 import { CommonModule } from './common/common.module';
 import { AuthModule } from './auth/auth.module';
 import { CompaniesModule } from './companies/companies.module';
-
+import { WinstonModule } from 'nest-winston';
+import { winstonConfig } from './logger/winston.config';
+import { ExceptionsFilter } from './common/exceptions.filter';
+import { APP_FILTER } from '@nestjs/core';
 @Module({
   imports: [
     UsersModule,
     DatabaseModule,
     EmployeesModule,
     CommonModule,
+    WinstonModule.forRoot(winstonConfig),
     // ThrottlerModule.forRoot([
     //   { name: 'short', ttl: 1000, limit: 3 },
     //   { name: 'long', ttl: 60000, limit: 3 },
     // ]),
-    MyLoggerModule,
+    // MyLoggerModule,
     AuthModule,
     CompaniesModule,
   ],
@@ -29,6 +33,11 @@ import { CompaniesModule } from './companies/companies.module';
   providers: [
     AppService,
     // { provide: APP_GUARD, useClass: ThrottlerGuard } Activates the throttle
+    {
+      provide: APP_FILTER,
+      useClass: ExceptionsFilter,
+    },
   ],
+  exports: [WinstonModule],
 })
 export class AppModule {}

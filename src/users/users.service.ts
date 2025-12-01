@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, HttpException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  NotFoundException,
+  HttpException,
+} from '@nestjs/common';
+import type { LoggerService } from '@nestjs/common';
 // import { UpdateUserDto } from './dto/update-user.dto';
 // import { CreateUserDto } from './dto/create-user.dto';
 import { Prisma } from '@prisma/client';
@@ -10,10 +16,13 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { LoginUserDto } from './dto/login-user.dto';
 // import { v4 as uuidv4 } from 'uuid';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 @Injectable()
 export class UsersService {
   constructor(
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: LoggerService,
     private validationService: ValidationService,
     private jwtService: JwtService,
     private readonly databaseService: DatabaseService,
@@ -146,7 +155,7 @@ export class UsersService {
         company: true,
       },
     });
-    if (!result) {
+    if (!result.length) {
       throw new NotFoundException(404, 'Not found!');
     }
 
@@ -161,6 +170,8 @@ export class UsersService {
     //     company_name: obj.company ? obj.company.name : '',
     //   };
     // });
+
+    this.logger.log('Users fetched!');
 
     return {
       data: result,

@@ -3,10 +3,16 @@ import {
   ArgumentsHost,
   HttpStatus,
   HttpException,
+  Inject,
 } from '@nestjs/common';
 import { BaseExceptionFilter } from '@nestjs/core';
 import { Request, Response } from 'express';
 import { MyLoggerService } from '../my-logger/my-logger.service';
+// import { LoggerService } from '@nestjs/common';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import type { LoggerService } from '@nestjs/common';
+import { Logger } from 'winston';
+
 import { PrismaClientValidationError } from '@prisma/client/runtime/library';
 import { ZodError } from 'zod';
 
@@ -19,7 +25,9 @@ type MyResponseObj = {
 
 @Catch()
 export class ExceptionsFilter extends BaseExceptionFilter {
-  private readonly logger = new MyLoggerService(ExceptionsFilter.name);
+  // private readonly logger = new MyLoggerService(ExceptionsFilter.name);
+  @Inject(WINSTON_MODULE_NEST_PROVIDER)
+  private readonly logger: LoggerService;
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
@@ -53,8 +61,20 @@ export class ExceptionsFilter extends BaseExceptionFilter {
 
     response.status(myResponseObj.statusCode).json(myResponseObj);
 
-    this.logger.error(myResponseObj.response, ExceptionsFilter.name);
+    // this.logger.error(myResponseObj.response, ExceptionsFilter.name);
+    // this.logger.error({
+    //   message: myResponseObj.response,
+    //   context: ExceptionsFilter.name,
+    // });
+    this.logger.error(
+      typeof myResponseObj.response === 'string'
+        ? myResponseObj.response
+        : JSON.stringify(myResponseObj.response),
+      undefined,
+      ExceptionsFilter.name,
+    );
+    // console.error('LOGGER TEST', myResponseObj.response);
 
-    super.catch(exception, host);
+    // super.catch(exception, host);
   }
 }
