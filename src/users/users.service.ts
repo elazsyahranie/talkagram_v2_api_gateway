@@ -29,6 +29,14 @@ export class UsersService {
   ) {}
 
   async create(requestBody: Prisma.UsersCreateInput) {
+    let { first_name, middle_name, last_name } = requestBody;
+    requestBody.name =
+      `${first_name ? first_name : ''} ${middle_name ? middle_name : ''} ${last_name ? last_name : ''}`.trim();
+
+    this.validationService.validate(UserValidation.REGISTER, requestBody);
+
+    requestBody.password = await bcrypt.hash(requestBody.password, 10);
+
     const [emailDuplicate, usernameDuplicate, phoneDuplicate] =
       await Promise.all([
         this.databaseService.users.count({
@@ -54,14 +62,6 @@ export class UsersService {
       throw new HttpException('Username already used!', 409);
     if (phoneDuplicate != 0)
       throw new HttpException('Phone already used!', 409);
-
-    let { first_name, middle_name, last_name } = requestBody;
-    requestBody.name =
-      `${first_name ? first_name : ''} ${middle_name ? middle_name : ''} ${last_name ? last_name : ''}`.trim();
-
-    requestBody.password = await bcrypt.hash(requestBody.password, 10);
-
-    this.validationService.validate(UserValidation.REGISTER, requestBody);
 
     const createUser = await this.databaseService.users.create({
       data: requestBody,
@@ -156,7 +156,7 @@ export class UsersService {
       },
     });
     if (!result.length) {
-      throw new NotFoundException(404, 'Not found!');
+      throw new NotFoundException('Not found!');
     }
 
     // const returnedResult = result.map((obj) => {
