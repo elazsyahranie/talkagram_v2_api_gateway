@@ -171,7 +171,7 @@ export class UsersService {
     //   };
     // });
 
-    this.logger.log('Users fetched!');
+    this.logger.log('Users fetched!', 'UsersService');
 
     return {
       data: result,
