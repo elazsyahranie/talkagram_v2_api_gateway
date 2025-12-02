@@ -27,7 +27,7 @@ type MyResponseObj = {
 export class ExceptionsFilter extends BaseExceptionFilter {
   // private readonly logger = new MyLoggerService(ExceptionsFilter.name);
   @Inject(WINSTON_MODULE_NEST_PROVIDER)
-  private readonly logger: LoggerService;
+  private readonly logger: Logger;
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
@@ -43,8 +43,15 @@ export class ExceptionsFilter extends BaseExceptionFilter {
 
     // Add more Prisma Error Types if you want
     if (exception instanceof HttpException) {
-      myResponseObj.statusCode = exception.getStatus();
-      myResponseObj.response = exception.getResponse();
+      const getStatusCode = exception.getStatus();
+      const getResponse = exception.getResponse() as any;
+
+      myResponseObj.statusCode = getStatusCode;
+      if (typeof getResponse == 'object') {
+        myResponseObj.response = getResponse.message;
+      } else {
+        myResponseObj.response = getResponse;
+      }
     } else if (exception instanceof PrismaClientValidationError) {
       myResponseObj.statusCode = 422;
       myResponseObj.response = exception.message.replaceAll(/\n/g, ' ');
@@ -54,18 +61,12 @@ export class ExceptionsFilter extends BaseExceptionFilter {
         return err.message;
       });
     } else {
-      // console.dir(exception, { depth: null })
       myResponseObj.statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
       myResponseObj.response = 'Internal Server Error';
     }
 
     response.status(myResponseObj.statusCode).json(myResponseObj);
 
-    // this.logger.error(myResponseObj.response, ExceptionsFilter.name);
-    // this.logger.error({
-    //   message: myResponseObj.response,
-    //   context: ExceptionsFilter.name,
-    // });
     this.logger.error(
       typeof myResponseObj.response === 'string'
         ? myResponseObj.response
@@ -73,8 +74,5 @@ export class ExceptionsFilter extends BaseExceptionFilter {
       undefined,
       ExceptionsFilter.name,
     );
-    // console.error('LOGGER TEST', myResponseObj.response);
-
-    // super.catch(exception, host);
   }
 }
