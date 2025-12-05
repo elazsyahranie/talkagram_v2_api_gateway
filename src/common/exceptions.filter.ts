@@ -7,10 +7,7 @@ import {
 } from '@nestjs/common';
 import { BaseExceptionFilter } from '@nestjs/core';
 import { Request, Response } from 'express';
-import { MyLoggerService } from '../my-logger/my-logger.service';
-// import { LoggerService } from '@nestjs/common';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import type { LoggerService } from '@nestjs/common';
 import { Logger } from 'winston';
 
 import { PrismaClientValidationError } from '@prisma/client/runtime/library';

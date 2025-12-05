@@ -12,17 +12,17 @@ import { DatabaseService } from 'src/database/database.service';
 import { ValidationService } from '../common/validation.service';
 import { UserValidation } from './users.validation';
 import * as bcrypt from 'bcrypt';
-// import { LoginUserRequest, RegisterUserRequest } from 'src/models/users.model';
 import { JwtService } from '@nestjs/jwt';
 import { LoginUserDto } from './dto/login-user.dto';
 // import { v4 as uuidv4 } from 'uuid';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 
 @Injectable()
 export class UsersService {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
-    private readonly logger: LoggerService,
+    private readonly logger: Logger,
     private validationService: ValidationService,
     private jwtService: JwtService,
     private readonly databaseService: DatabaseService,
@@ -67,6 +67,8 @@ export class UsersService {
       data: requestBody,
     });
 
+    this.logger.log('User created!', 'UsersService');
+
     return { name: createUser.name, email: createUser.email };
   }
 
@@ -107,35 +109,14 @@ export class UsersService {
       email: findUser.email,
     });
 
+    this.logger.log('User created!', 'UsersService');
+
     return {
       name: findUser.name,
       email: findUser.email,
       token,
     };
   }
-
-  // async findAll(keywords?: string, role?: 'Admin' | 'User') {
-  //   const where: Prisma.UsersWhereInput = {};
-  //   if (keywords)
-  //     where.name = {
-  //       contains: keywords,
-  //       mode: 'insensitive',
-  //     };
-  //   if (role) {
-  //     where.role = role;
-  //   }
-  //   const result = await this.databaseService.users.findMany({
-  //     where,
-  //     omit: { password: true, createdAt: true, updatedAt: true },
-  //   });
-  //   if (!result) {
-  //     throw new NotFoundException(404, 'User not found!');
-  //   }
-
-  //   return {
-  //     data: result,
-  //   };
-  // }
 
   async findAll(keywords?: string, role?: 'Admin' | 'User') {
     const where: Prisma.UsersWhereInput = {};
@@ -147,7 +128,7 @@ export class UsersService {
     if (role) {
       where.role = role;
     }
-    // where.company = { isNot: null };
+
     const result = await this.databaseService.users.findMany({
       where,
       omit: { password: true, createdAt: true, updatedAt: true },
@@ -158,18 +139,6 @@ export class UsersService {
     if (!result.length) {
       throw new NotFoundException('Not found!');
     }
-
-    // const returnedResult = result.map((obj) => {
-    //   return {
-    //     user_id: obj.id,
-    //     company_id: obj.company ? obj.company.id : '',
-    //     nama: obj.name,
-    //     email: obj.email,
-    //     telp: obj.phone,
-    //     company_code: obj.company ? obj.company.code : '',
-    //     company_name: obj.company ? obj.company.name : '',
-    //   };
-    // });
 
     this.logger.log('Users fetched!', 'UsersService');
 
@@ -186,6 +155,8 @@ export class UsersService {
     if (!data) {
       throw new NotFoundException(404, 'User not found!');
     }
+
+    // this.logger.log('One user fetched!', 'UsersService');
 
     return {
       data: data,
@@ -210,6 +181,8 @@ export class UsersService {
     if (user.password) user.password = await bcrypt.hash(user.password, 10);
 
     this.validationService.validate(UserValidation.UPDATE, user);
+
+    this.logger.log('User updated!', 'UsersService');
 
     await this.databaseService.users.update({
       where: { id },
@@ -236,6 +209,8 @@ export class UsersService {
         id,
       },
     });
+
+    this.logger.log('User deleted!', 'UsersService');
 
     return { status: 'success' };
   }

@@ -7,21 +7,26 @@ import {
   Body,
   Patch,
   Delete,
-  ParseIntPipe,
   ValidationPipe,
   HttpCode,
   UseGuards,
   Req,
+  Inject,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { MyLoggerService } from 'src/my-logger/my-logger.service';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { Prisma } from '@prisma/client';
 import { LoginUserDto } from './dto/login-user.dto';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: Logger,
+    private readonly usersService: UsersService,
+  ) {}
   // private readonly logger = new MyLoggerService(UsersController.name);
 
   @Post('/login')
@@ -44,6 +49,7 @@ export class UsersController {
   @HttpCode(200)
   getProfile(@Req() req: any) {
     const { id } = req.user;
+    this.logger.log(`Profile ${id} fetched`, 'UsersService');
     return this.usersService.findOne(id);
   }
 
@@ -53,16 +59,11 @@ export class UsersController {
     return this.usersService.findAll(query.keywords, query.role);
   }
 
-  // @Get('/companies')
-  // @HttpCode(200)
-  // findAll(@Query() query: { keywords?: string; role?: 'Admin' | 'User' }) {
-  //   return this.usersService.findAllWithCompanies(query.keywords, query.role);
-  // }
-
   // ParseIntPipe
   @Get(':id')
   @HttpCode(200)
   findOne(@Param('id') id: string) {
+    this.logger.log(`User id:${id} fetched`, 'UsersService');
     return this.usersService.findOne(id);
   }
 

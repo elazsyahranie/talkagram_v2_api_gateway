@@ -8,6 +8,7 @@ dotenv.config();
 import { winstonConfig } from './logger/winston.config';
 import { WinstonModule } from 'nest-winston';
 import { ErrorFilter } from './common/error.filter';
+import { Reflector } from '@nestjs/core';
 
 async function bootstrap() {
   const app = await NestFactory.create(
@@ -19,7 +20,7 @@ async function bootstrap() {
   );
 
   // const { httpAdapter } = app.get(HttpAdapterHost);
-  // app.useGlobalFilters(new ExceptionsFilter(httpAdapter));
+  // app.useGlobalFilters(new ExceptionsFilter());
   // app.useGlobalFilters(new ErrorFilter());
 
   // app.useLogger(app.get(MyLoggerService))
