@@ -23,6 +23,7 @@ async function bootstrap() {
   // app.useGlobalFilters(new ExceptionsFilter());
   // app.useGlobalFilters(new ErrorFilter());
 
+  // app.useStaticAssets(join(__dirname, '..', 'uploads'));
   // app.useLogger(app.get(MyLoggerService))
   app.enableCors(); // The current setting allows all origins to acces your API (not recommended for production environments)
   app.setGlobalPrefix('api'); // Global prefix

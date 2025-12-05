@@ -14,6 +14,9 @@ import { WinstonModule } from 'nest-winston';
 import { winstonConfig } from './logger/winston.config';
 import { ExceptionsFilter } from './common/exceptions.filter';
 import { APP_FILTER } from '@nestjs/core';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+
 @Module({
   imports: [
     UsersModule,
@@ -21,6 +24,10 @@ import { APP_FILTER } from '@nestjs/core';
     EmployeesModule,
     CommonModule,
     WinstonModule.forRoot(winstonConfig),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, 'uploads', 'images'),
+      serveRoot: '/uploads',
+    }),
     // ThrottlerModule.forRoot([
     //   { name: 'short', ttl: 1000, limit: 3 },
     //   { name: 'long', ttl: 60000, limit: 3 },

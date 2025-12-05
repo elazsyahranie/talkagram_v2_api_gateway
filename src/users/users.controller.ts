@@ -12,6 +12,8 @@ import {
   UseGuards,
   Req,
   Inject,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { AuthGuard } from 'src/auth/auth.guard';
@@ -19,6 +21,10 @@ import { Prisma } from '@prisma/client';
 import { LoginUserDto } from './dto/login-user.dto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
+import { multerImageConfig } from 'src/common/file-upload.util';
 
 @Controller('users')
 export class UsersController {
@@ -40,8 +46,12 @@ export class UsersController {
 
   @Post()
   @HttpCode(201)
-  create(@Body() userData: Prisma.UsersCreateInput) {
-    return this.usersService.create(userData);
+  @UseInterceptors(FileInterceptor('profile', multerImageConfig('images')))
+  create(
+    @Body() userData: Prisma.UsersCreateInput,
+    @UploadedFile() profile: Express.Multer.File,
+  ) {
+    return this.usersService.create(userData); // Tinggal diteruskan untuk upload file nya ya
   }
 
   @Get('/profile')
@@ -68,7 +78,7 @@ export class UsersController {
   }
 
   @Patch(':id')
-  @HttpCode(200)
+  @HttpCode(200) // Lanjut agar bisa update foto profil di sini
   update(
     @Param('id') id: string,
     @Body(ValidationPipe)
