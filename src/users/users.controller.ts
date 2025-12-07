@@ -22,8 +22,8 @@ import { LoginUserDto } from './dto/login-user.dto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+// import { diskStorage } from 'multer';
+// import { extname } from 'path';
 import { fileFilter, multerImageConfig } from 'src/file-upload.util';
 
 @Controller('users')
@@ -46,13 +46,14 @@ export class UsersController {
 
   @Post()
   @HttpCode(201)
-  @UseInterceptors(FileInterceptor('profile', multerImageConfig('images')))
+  @UseInterceptors(
+    FileInterceptor('profile', multerImageConfig('images', 'image')),
+  )
   create(
     @Body() userData: Prisma.UsersCreateInput,
     @UploadedFile() profile: Express.Multer.File,
   ) {
     return this.usersService.create(userData);
-    // return { status: 'success' };
   }
 
   @Get('/profile')
@@ -73,7 +74,6 @@ export class UsersController {
   // ParseIntPipe
   @Get(':id')
   @HttpCode(200)
-  @UseInterceptors(FileInterceptor('profile', multerImageConfig('images')))
   findOne(@Param('id') id: string) {
     this.logger.log(`User id:${id} fetched`, 'UsersService');
     return this.usersService.findOne(id);

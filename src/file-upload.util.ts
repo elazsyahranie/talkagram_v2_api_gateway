@@ -8,7 +8,7 @@ export function fileFilter(file: any) {
 }
 
 // Enter the directory of the folder to store the file
-export function multerImageConfig(path: string) {
+export function multerImageConfig(path: string, type: string) {
   return {
     storage: diskStorage({
       destination: `./uploads/${path}`,
@@ -20,16 +20,24 @@ export function multerImageConfig(path: string) {
 
     // Type Validation
     fileFilter: (_req: any, file: any, cb: any) => {
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+      // console.dir(path, { depth: null });
+
+      let allowedTypes: string[] = [];
+      let errorMessage = '';
+      if (type === 'image') {
+        allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+        errorMessage = 'Only JPEG, JPG, and PNG formats are allowed!';
+      } else if (type === 'document') {
+        allowedTypes = [
+          'application/pdf',
+          'application/msword',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ];
+        errorMessage = 'Only PDF, DOC and DOCX are allowed!';
+      }
 
       if (!allowedTypes.includes(file.mimetype)) {
-        cb(
-          new HttpException(
-            'Only JPEG, JPG, and PNG formats are allowed!',
-            400,
-          ),
-          false,
-        );
+        cb(new HttpException(errorMessage, 400), false);
       } else {
         cb(null, true);
       }
