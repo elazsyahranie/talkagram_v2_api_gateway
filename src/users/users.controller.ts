@@ -24,7 +24,7 @@ import { Logger } from 'winston';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-import { multerImageConfig } from 'src/common/file-upload.util';
+import { fileFilter, multerImageConfig } from 'src/file-upload.util';
 
 @Controller('users')
 export class UsersController {
@@ -51,7 +51,8 @@ export class UsersController {
     @Body() userData: Prisma.UsersCreateInput,
     @UploadedFile() profile: Express.Multer.File,
   ) {
-    return this.usersService.create(userData); // Tinggal diteruskan untuk upload file nya ya
+    return this.usersService.create(userData);
+    // return { status: 'success' };
   }
 
   @Get('/profile')
@@ -72,16 +73,19 @@ export class UsersController {
   // ParseIntPipe
   @Get(':id')
   @HttpCode(200)
+  @UseInterceptors(FileInterceptor('profile', multerImageConfig('images')))
   findOne(@Param('id') id: string) {
     this.logger.log(`User id:${id} fetched`, 'UsersService');
     return this.usersService.findOne(id);
   }
 
   @Patch(':id')
-  @HttpCode(200) // Lanjut agar bisa update foto profil di sini
+  @HttpCode(200)
   update(
     @Param('id') id: string,
     @Body(ValidationPipe)
+    @UploadedFile()
+    profile: Express.Multer.File,
     updatedUser: Prisma.UsersUpdateInput,
   ) {
     return this.usersService.update(id, updatedUser);
