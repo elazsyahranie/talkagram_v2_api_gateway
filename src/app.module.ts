@@ -25,7 +25,8 @@ import { join } from 'path';
     CommonModule,
     WinstonModule.forRoot(winstonConfig),
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, 'uploads', 'images'),
+      rootPath: join(process.cwd(), 'uploads'),
+      // rootPath: join(__dirname, '..', 'uploads'),
       serveRoot: '/uploads',
     }),
     // ThrottlerModule.forRoot([

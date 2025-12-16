@@ -38,6 +38,9 @@ export class ExceptionsFilter extends BaseExceptionFilter {
       response: '',
     };
 
+    // console.log('Exception');
+    // console.dir(exception, { depth: null });
+
     // Add more Prisma Error Types if you want
     if (exception instanceof HttpException) {
       const getStatusCode = exception.getStatus();

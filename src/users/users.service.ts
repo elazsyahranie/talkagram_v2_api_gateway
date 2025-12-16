@@ -17,6 +17,7 @@ import { LoginUserDto } from './dto/login-user.dto';
 // import { v4 as uuidv4 } from 'uuid';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
+import { UserImageDto } from './dto/user-image.dto';
 
 @Injectable()
 export class UsersService {
@@ -163,7 +164,12 @@ export class UsersService {
     };
   }
 
-  async update(id: string, user: Prisma.UsersUpdateInput) {
+  async update(
+    id: string,
+    user: Prisma.UsersUpdateInput,
+    profile?: Express.Multer.File,
+    header?: Express.Multer.File,
+  ) {
     const findUser = await this.databaseService.users.findUnique({
       where: {
         id,
@@ -182,12 +188,56 @@ export class UsersService {
 
     this.validationService.validate(UserValidation.UPDATE, user);
 
-    this.logger.log('User updated!', 'UsersService');
-
     await this.databaseService.users.update({
       where: { id },
       data: user,
     });
+
+    if (profile) {
+      const imageDataBody: UserImageDto = {
+        filename: profile.filename,
+        path: profile.path.replace(/\\/g, '/'),
+        type: 'Profile',
+        user_id: id,
+      };
+      await this.databaseService.$transaction([
+        // 'delete' only accepts unique columns
+        // Or you can use 'composite unique key' (although we don't use it here)
+        this.databaseService.userImages.deleteMany({
+          where: {
+            user_id: id,
+            type: 'Profile',
+          },
+        }),
+        this.databaseService.userImages.create({
+          data: { ...imageDataBody },
+        }),
+      ]);
+    }
+    if (header) {
+      const imageDataBody: UserImageDto = {
+        filename: header.filename,
+        path: header.path.replace(/\\/g, '/'),
+        type: 'Header',
+        user_id: id,
+      };
+
+      await this.databaseService.$transaction([
+        // 'delete' only accepts unique columns
+        // Or you can use 'composite unique key' (although we don't use it here)
+        this.databaseService.userImages.deleteMany({
+          where: {
+            user_id: id,
+            type: 'Header',
+          },
+        }),
+        this.databaseService.userImages.create({
+          data: { ...imageDataBody },
+        }),
+      ]);
+    }
+
+    this.logger.log('User updated!', 'UsersService');
 
     return {
       status: 'success',
