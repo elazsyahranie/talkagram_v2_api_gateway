@@ -52,15 +52,33 @@ export class UsersController {
 
   @Post()
   @HttpCode(201)
+  // @UseInterceptors(
+  //   FileInterceptor('profile', multerImageConfig('images', 'image')),
+  //   FileInterceptor('header', multerImageConfig('images', 'image')),
+  // )
   @UseInterceptors(
-    FileInterceptor('profile', multerImageConfig('images', 'image')),
-    FileInterceptor('header', multerImageConfig('images', 'image')),
+    FileFieldsInterceptor(
+      [
+        { name: 'profile', maxCount: 1 },
+        { name: 'header', maxCount: 1 },
+      ],
+      multerImageConfig('images', 'image'),
+    ),
   )
   create(
     @Body() userData: Prisma.UsersCreateInput,
-    @UploadedFile() profile: Express.Multer.File,
+    // @UploadedFile() profile: Express.Multer.File,
+    @UploadedFiles()
+    files: {
+      profile?: Express.Multer.File[];
+      header?: Express.Multer.File[];
+    },
   ) {
-    return this.usersService.create(userData);
+    return this.usersService.create(
+      userData,
+      files.profile ? files.profile[0] : undefined,
+      files.header ? files.header[0] : undefined,
+    );
   }
 
   @Get('/profile')

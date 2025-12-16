@@ -4,7 +4,7 @@ import {
   NotFoundException,
   HttpException,
 } from '@nestjs/common';
-import type { LoggerService } from '@nestjs/common';
+// import type { LoggerService } from '@nestjs/common';
 // import { UpdateUserDto } from './dto/update-user.dto';
 // import { CreateUserDto } from './dto/create-user.dto';
 import { Prisma } from '@prisma/client';
@@ -14,7 +14,7 @@ import { UserValidation } from './users.validation';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { LoginUserDto } from './dto/login-user.dto';
-// import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import { UserImageDto } from './dto/user-image.dto';
@@ -29,13 +29,19 @@ export class UsersService {
     private readonly databaseService: DatabaseService,
   ) {}
 
-  async create(requestBody: Prisma.UsersCreateInput) {
+  async create(
+    requestBody: Prisma.UsersCreateInput,
+    profile?: Express.Multer.File,
+    header?: Express.Multer.File,
+  ) {
     let { first_name, middle_name, last_name } = requestBody;
     requestBody.name =
       `${first_name ? first_name : ''} ${middle_name ? middle_name : ''} ${last_name ? last_name : ''}`.trim();
 
     this.validationService.validate(UserValidation.REGISTER, requestBody);
 
+    const user_id = uuidv4();
+    requestBody.id = user_id;
     requestBody.password = await bcrypt.hash(requestBody.password, 10);
 
     const [emailDuplicate, usernameDuplicate, phoneDuplicate] =
@@ -67,6 +73,31 @@ export class UsersService {
     const createUser = await this.databaseService.users.create({
       data: requestBody,
     });
+
+    if (profile) {
+      const imageDataBody: UserImageDto = {
+        filename: profile.filename,
+        path: profile.path.replace(/\\/g, '/'),
+        type: 'Profile',
+        user_id: user_id,
+      };
+      await this.databaseService.userImages.create({
+        data: { ...imageDataBody },
+      });
+    }
+
+    if (header) {
+      const imageDataBody: UserImageDto = {
+        filename: header.filename,
+        path: header.path.replace(/\\/g, '/'),
+        type: 'Header',
+        user_id: user_id,
+      };
+
+      await this.databaseService.userImages.create({
+        data: { ...imageDataBody },
+      });
+    }
 
     this.logger.log('User created!', 'UsersService');
 
