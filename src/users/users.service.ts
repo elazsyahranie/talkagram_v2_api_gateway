@@ -18,6 +18,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import { UserImageDto } from './dto/user-image.dto';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 @Injectable()
 export class UsersService {
@@ -153,45 +155,132 @@ export class UsersService {
   async findAll(keywords?: string, role?: 'Admin' | 'User') {
     const where: Prisma.UsersWhereInput = {};
     if (keywords)
-      where.name = {
-        contains: keywords,
-        mode: 'insensitive',
-      };
+      // where.name = {
+      //   contains: keywords,
+      //   mode: 'insensitive',
+      // };
+      where.OR = [
+        {
+          name: {
+            contains: keywords,
+            mode: 'insensitive',
+          },
+        },
+        {
+          company: {
+            name: {
+              contains: keywords,
+              mode: 'insensitive',
+            },
+          },
+        },
+      ];
     if (role) {
       where.role = role;
     }
 
     const result = await this.databaseService.users.findMany({
       where,
-      omit: { password: true, createdAt: true, updatedAt: true },
-      include: {
-        company: true,
+      select: {
+        id: true,
+        first_name: true,
+        middle_name: true,
+        last_name: true,
+        name: true,
+        username: true,
+        email: true,
+        phone: true,
+        role: true,
+        about: true,
+        company: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            createdAt: true,
+          },
+        },
+        user_images: {
+          select: {
+            id: true,
+            path: true,
+            type: true,
+          },
+        },
       },
+      // omit: { password: true, createdAt: true, updatedAt: true },
+      // include: {
+      //   company: true,
+      //   user_images: true,
+      // },
     });
     if (!result.length) {
       throw new NotFoundException('Not found!');
     }
 
+    const finalResult = result.map((obj) => {
+      const userImages = obj.user_images.length
+        ? obj.user_images.map((obj) => {
+            return { ...obj, path: `${process.env.PROJECT_URL}/${obj.path}` };
+          })
+        : [];
+
+      return { ...obj, user_images: userImages };
+    });
+
     this.logger.log('Users fetched!', 'UsersService');
 
     return {
-      data: result,
+      data: finalResult,
     };
   }
 
   async findOne(id: string) {
     const data = await this.databaseService.users.findUnique({
       where: { id },
-      omit: { password: true, createdAt: true, updatedAt: true },
+      // omit: { password: true, createdAt: true, updatedAt: true },
+      select: {
+        id: true,
+        first_name: true,
+        middle_name: true,
+        last_name: true,
+        name: true,
+        username: true,
+        email: true,
+        phone: true,
+        role: true,
+        about: true,
+        company: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            createdAt: true,
+          },
+        },
+        user_images: {
+          select: {
+            id: true,
+            path: true,
+            type: true,
+          },
+        },
+      },
     });
     if (!data) {
       throw new NotFoundException(404, 'User not found!');
     }
 
-    // this.logger.log('One user fetched!', 'UsersService');
+    const userImages = data.user_images.length
+      ? data.user_images.map((obj) => {
+          return { ...obj, path: `${process.env.PROJECT_URL}/${obj.path}` };
+        })
+      : [];
+
+    this.logger.log('One user fetched!', 'UsersService');
 
     return {
-      data: data,
+      data: { ...data, user_images: userImages },
     };
   }
 
