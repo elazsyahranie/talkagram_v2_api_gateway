@@ -1,11 +1,8 @@
 import { HttpException } from '@nestjs/common';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-
-export function fileFilter(file: any) {
-  console.log('-FILE FILTER-');
-  console.dir(file, { depth: null });
-}
+import { unlink } from 'fs/promises';
+import { existsSync } from 'fs';
 
 // Enter the directory of the folder to store the file
 export function multerImageConfig(path: string, type: string) {
@@ -45,4 +42,17 @@ export function multerImageConfig(path: string, type: string) {
 
     limits: { fileSize: 5 * 1024 * 1024 },
   };
+}
+
+export async function deleteFileIfExists(paths: string[]) {
+  // if (existsSync(path)) {
+  //   await unlink(path);
+  // }
+  await Promise.all(
+    paths.map(async (path) => {
+      if (existsSync(path)) {
+        await unlink(path);
+      }
+    }),
+  );
 }

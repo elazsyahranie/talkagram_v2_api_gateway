@@ -18,6 +18,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import { UserImageDto } from './dto/user-image.dto';
+import { deleteFileIfExists } from 'src/file-upload.util';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
@@ -365,12 +366,23 @@ export class UsersService {
   }
 
   async delete(id: string) {
-    const findUser = await this.databaseService.users.count({
+    const findUser = await this.databaseService.users.findFirst({
       where: {
         id,
       },
+      select: {
+        id: true,
+        user_images: {
+          select: {
+            id: true,
+            path: true,
+            type: true,
+          },
+        },
+      },
     });
-    if (findUser === 0) {
+
+    if (!findUser) {
       throw new HttpException('User not found!', 404);
     }
 
@@ -380,8 +392,16 @@ export class UsersService {
       },
     });
 
+    if (findUser.user_images.length) {
+      const filePaths = findUser.user_images.map((obj) => {
+        return obj.path;
+      });
+      deleteFileIfExists(filePaths);
+    }
+
     this.logger.log('User deleted!', 'UsersService');
 
     return { status: 'success' };
+    // return { data: findUser };
   }
 }

@@ -29,8 +29,8 @@ import {
 } from '@nestjs/platform-express';
 // import { diskStorage } from 'multer';
 // import { extname } from 'path';
-import { fileFilter, multerImageConfig } from 'src/file-upload.util';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { multerImageConfig } from 'src/file-upload.util';
+// import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('users')
 export class UsersController {
