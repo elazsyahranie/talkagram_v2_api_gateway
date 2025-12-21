@@ -156,6 +156,7 @@ export class UsersService {
   async findAll(
     page: number,
     limit: number,
+    order: string,
     keywords?: string,
     role?: 'Admin' | 'User',
   ) {
@@ -183,6 +184,17 @@ export class UsersService {
       ];
     if (role) {
       where.role = role;
+    }
+
+    const orderBy: Prisma.UsersOrderByWithRelationInput = {};
+    if (order === 'a-z') {
+      orderBy.name = 'asc';
+    } else if (order === 'z-a') {
+      orderBy.name = 'desc';
+    } else if (order === 'latest') {
+      orderBy.createdAt = 'desc';
+    } else if (order === 'oldest') {
+      orderBy.createdAt = 'asc';
     }
 
     const totalData = await this.databaseService.users.count({ where });
@@ -221,9 +233,7 @@ export class UsersService {
       },
       skip: offset,
       take: limit,
-      orderBy: {
-        name: 'asc',
-      },
+      orderBy,
       // omit: { password: true, createdAt: true, updatedAt: true },
       // include: {
       //   company: true,

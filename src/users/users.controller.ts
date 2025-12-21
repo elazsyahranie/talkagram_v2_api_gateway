@@ -103,10 +103,12 @@ export class UsersController {
     // },
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Query('order', new DefaultValuePipe('a-z')) order: string,
     @Query('keywords') keywords?: string,
     @Query('role') role?: 'Admin' | 'User',
   ) {
-    return this.usersService.findAll(page, limit, keywords, role);
+    // console.dir(sort);
+    return this.usersService.findAll(page, limit, order, keywords, role);
   }
 
   // ParseIntPipe
