@@ -153,7 +153,12 @@ export class UsersService {
     };
   }
 
-  async findAll(keywords?: string, role?: 'Admin' | 'User') {
+  async findAll(
+    page: number,
+    limit: number,
+    keywords?: string,
+    role?: 'Admin' | 'User',
+  ) {
     const where: Prisma.UsersWhereInput = {};
     if (keywords)
       // where.name = {
@@ -179,6 +184,11 @@ export class UsersService {
     if (role) {
       where.role = role;
     }
+
+    const totalData = await this.databaseService.users.count({ where });
+
+    const totalPage = Math.ceil(totalData / limit);
+    const offset = page * limit - limit;
 
     const result = await this.databaseService.users.findMany({
       where,
@@ -209,6 +219,8 @@ export class UsersService {
           },
         },
       },
+      skip: offset,
+      take: limit,
       // omit: { password: true, createdAt: true, updatedAt: true },
       // include: {
       //   company: true,
@@ -232,6 +244,9 @@ export class UsersService {
     this.logger.log('Users fetched!', 'UsersService');
 
     return {
+      totalData,
+      totalPage,
+      page,
       data: finalResult,
     };
   }

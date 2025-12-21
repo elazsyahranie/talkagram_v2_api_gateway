@@ -13,7 +13,8 @@ import {
   Req,
   Inject,
   UseInterceptors,
-  UploadedFile,
+  ParseIntPipe,
+  DefaultValuePipe,
   UploadedFiles,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
@@ -92,8 +93,20 @@ export class UsersController {
 
   @Get()
   @HttpCode(200)
-  findAll(@Query() query: { keywords?: string; role?: 'Admin' | 'User' }) {
-    return this.usersService.findAll(query.keywords, query.role);
+  findAll(
+    // @Query()
+    // query: {
+    //   keywords?: string;
+    //   role?: 'Admin' | 'User';
+    //   page?: number;
+    //   limit?: number;
+    // },
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Query('keywords') keywords?: string,
+    @Query('role') role?: 'Admin' | 'User',
+  ) {
+    return this.usersService.findAll(page, limit, keywords, role);
   }
 
   // ParseIntPipe
