@@ -221,6 +221,9 @@ export class UsersService {
       },
       skip: offset,
       take: limit,
+      orderBy: {
+        name: 'asc',
+      },
       // omit: { password: true, createdAt: true, updatedAt: true },
       // include: {
       //   company: true,
