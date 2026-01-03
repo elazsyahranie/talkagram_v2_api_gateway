@@ -119,7 +119,7 @@ export class UsersController {
     return this.usersService.findOne(id);
   }
 
-  @Patch(':id')
+  @Patch()
   @HttpCode(200)
   // @UseInterceptors(
   //   AnyFilesInterceptor(),
@@ -135,8 +135,9 @@ export class UsersController {
       multerImageConfig('images', 'image'),
     ),
   )
+  @UseGuards(AuthGuard)
   update(
-    @Param('id') id: string,
+    // @Param('id') id: string,
     // updatedUser: UpdateUserDto,
     @Body(new ValidationPipe({ whitelist: true }))
     updatedUser: Prisma.UsersUpdateInput,
@@ -145,7 +146,9 @@ export class UsersController {
       profile?: Express.Multer.File[];
       header?: Express.Multer.File[];
     },
+    @Req() req: any,
   ) {
+    const { id } = req.user;
     return this.usersService.update(
       id,
       updatedUser,
@@ -154,9 +157,11 @@ export class UsersController {
     );
   }
 
-  @Delete(':id')
+  @Delete()
   @HttpCode(200)
-  delete(@Param('id') id: string) {
+  @UseGuards(AuthGuard)
+  delete(@Req() req: any) {
+    const { id } = req.user;
     return this.usersService.delete(id);
   }
 }
