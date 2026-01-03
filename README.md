@@ -97,7 +97,8 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE). 
 
-## Some notes on Prisma
+# Some Notes
+## Prisma
 - `npx prisma init`
   This will execute three things:
   - Creates a new directory called prisma that contains a file called schema.prisma, which contains the Prisma Schema with your database connection variable and schema models.
@@ -115,3 +116,14 @@ To generate prisma client file, you can execute
 
 ### On migrations 
 You would only need to edit your `prisma.schema` file, and then enter `npx prisma generate` to generate
+
+## Guards
+Guards look similar to middlewares, but there are differences. Guards:
+- Runs after routing
+- Knows exactly which controller and handler
+- Had access to metadata like from decorators
+
+Other notes 
+- Guards don't need to be manually exported (most of the time)
+- A guard that has been set to global doesn't have to be manually added to a controller since the guard would be executed autmatically before the controller gets executed
+  Note: If you set the a guard used for authentication to be global, then you have to create a decorator 'Public' for any public controllers in order to "bypass" the authentication
