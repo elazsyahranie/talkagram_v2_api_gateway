@@ -31,6 +31,8 @@ import {
 // import { diskStorage } from 'multer';
 // import { extname } from 'path';
 import { multerImageConfig } from 'src/file-upload.util';
+import { Public } from 'src/decorators/public.decorator';
+import { IsAdminGuard } from 'src/auth/isadmin.guard';
 // import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('users')
@@ -44,6 +46,7 @@ export class UsersController {
 
   @Post('/login')
   @HttpCode(200)
+  @Public()
   async login(@Body() request: LoginUserDto) {
     const result = await this.usersService.login(request);
     return {
@@ -57,6 +60,7 @@ export class UsersController {
   //   FileInterceptor('profile', multerImageConfig('images', 'image')),
   //   FileInterceptor('header', multerImageConfig('images', 'image')),
   // )
+  @Public()
   @UseInterceptors(
     FileFieldsInterceptor(
       [
@@ -83,7 +87,6 @@ export class UsersController {
   }
 
   @Get('/profile')
-  @UseGuards(AuthGuard)
   @HttpCode(200)
   getProfile(@Req() req: any) {
     const { id } = req.user;
@@ -157,9 +160,15 @@ export class UsersController {
     );
   }
 
+  @Delete('/:id')
+  @HttpCode(200)
+  @UseGuards(IsAdminGuard)
+  deleteById(@Param('id') id: string) {
+    return this.usersService.delete(id);
+  }
+
   @Delete()
   @HttpCode(200)
-  @UseGuards(AuthGuard)
   delete(@Req() req: any) {
     const { id } = req.user;
     return this.usersService.delete(id);

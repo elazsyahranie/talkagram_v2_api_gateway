@@ -1,19 +1,20 @@
 import { Module } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 // import { AuthService } from './auth.service';
-import { AuthGuard } from './auth.guard';
+import { AuthenticationGuard } from './authentication.guard';
 import { APP_GUARD } from '@nestjs/core';
 
 @Module({
-  controllers: [AuthController],
+  // controllers: [AuthController],
   providers: [
-    AuthGuard,
-    // If you want to make the 'AuthGuard' global
+    // AuthenticationGuard,
+    // If you want to make the 'AuthenticationGuard' global
+    // NOTE: You don't need to manually add any global guards to controllers
     {
       provide: APP_GUARD,
-      useClass: AuthGuard,
+      useClass: AuthenticationGuard,
     },
   ],
-  exports: [AuthGuard],
+  // exports: [AuthenticationGuard],
 })
 export class AuthModule {}
