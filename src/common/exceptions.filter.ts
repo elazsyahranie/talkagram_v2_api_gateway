@@ -31,6 +31,8 @@ export class ExceptionsFilter extends BaseExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
+    // console.dir(response, { depth: null });
+
     const myResponseObj: MyResponseObj = {
       statusCode: 500,
       timestamp: new Date().toISOString(),
@@ -58,6 +60,7 @@ export class ExceptionsFilter extends BaseExceptionFilter {
         return err.message;
       });
     } else {
+      console.dir(myResponseObj, { depth: null });
       myResponseObj.statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
       myResponseObj.response = 'Internal Server Error';
     }

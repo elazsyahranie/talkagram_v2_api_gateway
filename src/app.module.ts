@@ -16,6 +16,7 @@ import { ExceptionsFilter } from './common/exceptions.filter';
 import { APP_FILTER } from '@nestjs/core';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { RedisModule } from './redis.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { join } from 'path';
     // MyLoggerModule,
     AuthModule,
     CompaniesModule,
+    RedisModule,
   ],
   controllers: [AppController],
   providers: [

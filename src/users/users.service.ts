@@ -20,6 +20,7 @@ import { Logger } from 'winston';
 import { UserImageDto } from './dto/user-image.dto';
 import { deleteFileIfExists } from 'src/file-upload.util';
 import * as dotenv from 'dotenv';
+import Redis from 'ioredis';
 dotenv.config();
 
 @Injectable()
@@ -30,6 +31,7 @@ export class UsersService {
     private validationService: ValidationService,
     private jwtService: JwtService,
     private readonly databaseService: DatabaseService,
+    @Inject('REDIS_CLIENT') private readonly redis: Redis,
   ) {}
 
   async create(
@@ -265,6 +267,13 @@ export class UsersService {
   }
 
   async findOne(id: string) {
+    const cacheKey = `user:${id}`;
+
+    const cached = await this.redis.get(cacheKey);
+    if (cached) {
+      return { data: JSON.parse(cached) };
+    }
+
     const data = await this.databaseService.users.findUnique({
       where: { id },
       // omit: { password: true, createdAt: true, updatedAt: true },
@@ -308,11 +317,18 @@ export class UsersService {
 
     this.logger.log('One user fetched!', 'UsersService');
 
+    const finalData = { ...data, user_images: userImages };
+
+    // This means that the data cached in Redis would be stored for 3600 seconds (Time-To-Live or TTL)
+    // Normally, any caches in Redis should have expiry times instead of being stored permanently
+    await this.redis.setex(cacheKey, 3600, JSON.stringify({ ...finalData }));
+
     return {
-      data: { ...data, user_images: userImages },
+      data: { ...finalData },
     };
   }
 
+  // Sekarang tambahkan logic nya untuk hapus data yang di cache
   async update(
     id: string,
     user: Prisma.UsersUpdateInput,
@@ -337,10 +353,17 @@ export class UsersService {
 
     this.validationService.validate(UserValidation.UPDATE, user);
 
-    await this.databaseService.users.update({
-      where: { id },
-      data: user,
-    });
+    const cacheKey = `user:${id}`;
+    await this.redis.del(cacheKey);
+
+    await this.databaseService.users
+      .update({
+        where: { id },
+        data: user,
+      })
+      .catch((err) => {
+        console.dir(err, { depth: null });
+      });
 
     if (profile) {
       const imageDataBody: UserImageDto = {
@@ -414,6 +437,9 @@ export class UsersService {
       throw new HttpException('User not found!', 404);
     }
 
+    const cacheKey = `user:${id}`;
+    await this.redis.del(cacheKey);
+
     await this.databaseService.users.delete({
       where: {
         id,
@@ -430,6 +456,5 @@ export class UsersService {
     this.logger.log('User deleted!', 'UsersService');
 
     return { status: 'success' };
-    // return { data: findUser };
   }
 }
