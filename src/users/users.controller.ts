@@ -18,15 +18,14 @@ import {
   UploadedFiles,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { AuthGuard } from 'src/auth/auth.guard';
 import { Prisma } from '@prisma/client';
 import { LoginUserDto } from './dto/login-user.dto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import {
-  AnyFilesInterceptor,
+  // AnyFilesInterceptor,
   FileFieldsInterceptor,
-  FileInterceptor,
+  // FileInterceptor,
 } from '@nestjs/platform-express';
 // import { diskStorage } from 'multer';
 // import { extname } from 'path';
@@ -110,7 +109,6 @@ export class UsersController {
     @Query('keywords') keywords?: string,
     @Query('role') role?: 'Admin' | 'User',
   ) {
-    // console.dir(sort);
     return this.usersService.findAll(page, limit, order, keywords, role);
   }
 
@@ -138,10 +136,7 @@ export class UsersController {
       multerImageConfig('images', 'image'),
     ),
   )
-  @UseGuards(AuthGuard)
   update(
-    // @Param('id') id: string,
-    // updatedUser: UpdateUserDto,
     @Body(new ValidationPipe({ whitelist: true }))
     updatedUser: Prisma.UsersUpdateInput,
     @UploadedFiles()
@@ -160,6 +155,7 @@ export class UsersController {
     );
   }
 
+  // For admins only
   @Delete('/:id')
   @HttpCode(200)
   @UseGuards(IsAdminGuard)
