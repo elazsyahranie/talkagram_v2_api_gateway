@@ -335,6 +335,10 @@ export class UsersService {
     profile?: Express.Multer.File,
     header?: Express.Multer.File,
   ) {
+    if (!user) {
+      return { status: 'success' };
+    }
+
     const findUser = await this.databaseService.users.findUnique({
       where: {
         id,
@@ -344,6 +348,7 @@ export class UsersService {
       throw new HttpException('User not found!', 404);
     }
 
+    // Selesaikan yang ini ya, buat agar bisa kosong semua
     let { first_name, middle_name, last_name } = user;
     user.name =
       `${first_name ? first_name : findUser.first_name ? findUser.first_name : ''} ${middle_name ? middle_name : findUser.middle_name ? findUser.middle_name : ''} ${last_name ? last_name : findUser.last_name ? findUser.last_name : ''}`.trim();
@@ -356,14 +361,10 @@ export class UsersService {
     const cacheKey = `user:${id}`;
     await this.redis.del(cacheKey);
 
-    await this.databaseService.users
-      .update({
-        where: { id },
-        data: user,
-      })
-      .catch((err) => {
-        console.dir(err, { depth: null });
-      });
+    await this.databaseService.users.update({
+      where: { id },
+      data: user,
+    });
 
     if (profile) {
       const imageDataBody: UserImageDto = {

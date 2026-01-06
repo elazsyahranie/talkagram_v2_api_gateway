@@ -120,6 +120,9 @@ export class UsersController {
     return this.usersService.findOne(id);
   }
 
+  // Sending a competely blank form-data would throw error message
+  // This could be handled by either frontend (not sending the data to API if the form is completely blank)
+  // Or by backend (make a condition to not process the request any further if the request being sent is blank)
   @Patch()
   @HttpCode(200)
   // @UseInterceptors(
@@ -150,8 +153,8 @@ export class UsersController {
     return this.usersService.update(
       id,
       updatedUser,
-      files.profile ? files.profile[0] : undefined,
-      files.header ? files.header[0] : undefined,
+      files?.profile?.[0],
+      files?.header?.[0],
     );
   }
 

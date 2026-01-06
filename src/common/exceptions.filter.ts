@@ -31,7 +31,8 @@ export class ExceptionsFilter extends BaseExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    // console.dir(response, { depth: null });
+    // Use this to find out the exact error (in some cases the error message is incomplete)
+    console.dir(exception, { depth: null });
 
     const myResponseObj: MyResponseObj = {
       statusCode: 500,
@@ -60,7 +61,6 @@ export class ExceptionsFilter extends BaseExceptionFilter {
         return err.message;
       });
     } else {
-      console.dir(myResponseObj, { depth: null });
       myResponseObj.statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
       myResponseObj.response = 'Internal Server Error';
     }
