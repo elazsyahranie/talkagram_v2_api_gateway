@@ -17,6 +17,9 @@ import { APP_FILTER } from '@nestjs/core';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { RedisModule } from './redis.module';
+import { StaffsModule } from './staffs/staffs.module';
+import { StoresController } from './stores/stores.controller';
+import { StoresService } from './stores/stores.service';
 
 @Module({
   imports: [
@@ -38,8 +41,9 @@ import { RedisModule } from './redis.module';
     AuthModule,
     CompaniesModule,
     RedisModule,
+    StaffsModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, StoresController],
   providers: [
     AppService,
     // { provide: APP_GUARD, useClass: ThrottlerGuard } Activates the throttle
@@ -47,6 +51,7 @@ import { RedisModule } from './redis.module';
       provide: APP_FILTER,
       useClass: ExceptionsFilter,
     },
+    StoresService,
   ],
   exports: [WinstonModule],
 })
