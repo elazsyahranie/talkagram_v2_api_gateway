@@ -7,17 +7,18 @@ const prisma = new PrismaClient();
 async function main() {
   const users: Prisma.UsersCreateInput[] = [];
   const password = await bcrypt.hash('123456', 10);
-  for (let i = 0; i < 105; i++) {
+  for (let i = 0; i < 20; i++) {
     const name = faker.person.fullName();
-    const phone = faker.number.int({ min: 18, max: 20 }).toString();
-    const role = i <= 5 ? 'Admin' : 'User';
+    // const phone = faker.number.int({ min: 18, max: 20 }).toString();
+    // console.dir(phone, { depth: null });
+    const role = i < 5 ? 'Admin' : 'User';
     users.push({
-      email: faker.internet.email(),
+      email: name.toLowerCase().replaceAll(' ', '_') + '@yopmail.com',
       name,
       username: name.toLowerCase().replaceAll(' ', '_'),
       password,
       role,
-      phone: '08' + phone,
+      phone: '08' + faker.phone.number().replace(/[^0-9]/g, ''),
     });
   }
 
