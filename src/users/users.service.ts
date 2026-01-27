@@ -335,6 +335,7 @@ export class UsersService {
     profile?: Express.Multer.File,
     header?: Express.Multer.File,
   ) {
+    // Send response if the form-data being sent is blank
     if (!user) {
       return { status: 'success' };
     }
