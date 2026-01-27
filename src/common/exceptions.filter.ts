@@ -48,7 +48,7 @@ export class ExceptionsFilter extends BaseExceptionFilter {
 
       myResponseObj.statusCode = getStatusCode;
       if (typeof getResponse == 'object') {
-        myResponseObj.response = getResponse.message;
+        myResponseObj.response = getResponse.error;
       } else {
         myResponseObj.response = getResponse;
       }
