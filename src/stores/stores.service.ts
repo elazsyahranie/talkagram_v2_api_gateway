@@ -258,11 +258,6 @@ export class StoresService {
     };
   }
 
-  /* 
-    LANJUTKAN DI:
-    -Delete
-    -Cek lagi di module users (terutama di users.service.ts) apakah ada yang harus di-fix atau dihapus
-  */
   async delete(store_id: string, user_id: string) {
     // Find the store and check whether the user is the admin or not
     const findStore = await this.databaseService.staffs.findFirst({
