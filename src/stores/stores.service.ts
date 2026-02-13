@@ -179,7 +179,7 @@ export class StoresService {
   }
 
   async update(
-    id: string,
+    store_id: string,
     user_id: string,
     store: Prisma.StoresUpdateInput,
     profile?: Express.Multer.File,
@@ -193,7 +193,7 @@ export class StoresService {
     // Find the store and check whether the user is the admin or not
     const findStore = await this.databaseService.staffs.findFirst({
       where: {
-        store_id: id,
+        store_id,
         user_id,
         role: 'Admin',
       },
@@ -203,7 +203,7 @@ export class StoresService {
     }
 
     await this.databaseService.stores.update({
-      where: { id },
+      where: { id: store_id },
       data: store,
     });
 
@@ -212,14 +212,14 @@ export class StoresService {
         filename: profile.filename,
         path: profile.path.replace(/\\/g, '/'),
         type: 'Profile',
-        store_id: id,
+        store_id,
       };
       await this.databaseService.$transaction([
         // 'delete' only accepts unique columns
         // Or you can use 'composite unique key' (although we don't use it here)
         this.databaseService.storeImages.deleteMany({
           where: {
-            store_id: id,
+            store_id,
             type: 'Profile',
           },
         }),
@@ -233,7 +233,7 @@ export class StoresService {
         filename: header.filename,
         path: header.path.replace(/\\/g, '/'),
         type: 'Header',
-        store_id: id,
+        store_id,
       };
 
       await this.databaseService.$transaction([
@@ -241,7 +241,7 @@ export class StoresService {
         // Or you can use 'composite unique key' (although we don't use it here)
         this.databaseService.storeImages.deleteMany({
           where: {
-            store_id: id,
+            store_id,
             type: 'Header',
           },
         }),

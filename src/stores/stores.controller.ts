@@ -103,11 +103,11 @@ export class StoresController {
       header?: Express.Multer.File[];
     },
     @Req() req: any,
-    @Param('id') id: string,
+    @Param('id') store_id: string,
   ) {
     const user_id = req.user.id;
     return this.storesService.update(
-      id,
+      store_id,
       user_id,
       updatedStore,
       files?.profile?.[0],
