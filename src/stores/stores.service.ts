@@ -15,6 +15,7 @@ import { StoreImagesDto } from 'src/users/dto/store-images.dto';
 import * as dotenv from 'dotenv';
 // import Redis from 'ioredis';
 dotenv.config();
+import { deleteFileIfExists } from 'src/file-upload.util';
 
 @Injectable()
 export class StoresService {
@@ -262,5 +263,49 @@ export class StoresService {
     -Delete
     -Cek lagi di module users (terutama di users.service.ts) apakah ada yang harus di-fix atau dihapus
   */
-  async delete() {}
+  async delete(store_id: string, user_id: string) {
+    // Find the store and check whether the user is the admin or not
+    const findStore = await this.databaseService.staffs.findFirst({
+      where: {
+        store_id,
+        user_id,
+        role: 'Admin',
+      },
+      select: {
+        id: true,
+        stores: {
+          select: {
+            id: true,
+            store_images: {
+              select: {
+                id: true,
+                path: true,
+                type: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!findStore) {
+      throw new HttpException('Not found!', 404);
+    }
+
+    await this.databaseService.stores.delete({
+      where: {
+        id: store_id,
+      },
+    });
+
+    if (findStore.stores.store_images.length) {
+      const filePaths = findStore.stores.store_images.map((obj) => {
+        return obj.path;
+      });
+      deleteFileIfExists(filePaths);
+    }
+
+    this.logger.log('Store deleted!', 'StoresService');
+
+    return { status: 'success' };
+  }
 }

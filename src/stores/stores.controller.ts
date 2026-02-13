@@ -115,15 +115,10 @@ export class StoresController {
     );
   }
 
-  @Delete()
-  @Public()
+  @Delete(':id')
   @HttpCode(200)
-  // @UseInterceptors(
-  //   AnyFilesInterceptor(),
-  //   FileInterceptor('profile', multerImageConfig('images', 'image')),
-  //   FileInterceptor('header', multerImageConfig('images', 'image')),
-  // )
-  delete() {
-    return 'success delete';
+  delete(@Req() req: any, @Param('id') store_id: string) {
+    const user_id = req.user.id;
+    return this.storesService.delete(store_id, user_id);
   }
 }
