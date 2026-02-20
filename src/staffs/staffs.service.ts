@@ -1,4 +1,9 @@
-import { Injectable, Inject } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  HttpException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
 import { ValidationService } from '../common/validation.service';
@@ -6,7 +11,8 @@ import { StaffValidation } from './staffs.validation';
 import { v4 as uuidv4 } from 'uuid';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
-import * as bcrypt from 'bcrypt';
+import { AddStaffDto } from './dto/add-staff.dto';
+// import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class StaffsService {
@@ -17,45 +23,183 @@ export class StaffsService {
     private readonly databaseService: DatabaseService,
   ) {}
 
-  async create(requestBody: Prisma.StaffsCreateInput) {
-    this.validationService.validate(StaffValidation.REGISTER, requestBody);
+  /* 
+    Lanjut lagi:
+    -Teruskan ke CRUD yang lain
+  */
+  async create(adminId: string, requestBody: AddStaffDto) {
+    this.validationService.validate(StaffValidation.CREATE, requestBody);
 
-    const user_id = uuidv4();
-    requestBody.id = user_id;
-    // requestBody.password = await bcrypt.hash(requestBody.password, 10);
-
-    // const [emailDuplicate, usernameDuplicate, phoneDuplicate] =
-    //   await Promise.all([
-    //     this.databaseService.staffs.count({
-    //       where: {
-    //         email: requestBody.email,
-    //       },
-    //     }),
-    //     this.databaseService.staffs.count({
-    //       where: {
-    //         username: requestBody.username,
-    //       },
-    //     }),
-    //     this.databaseService.staffs.count({
-    //       where: {
-    //         phone: requestBody.phone,
-    //       },
-    //     }),
-    //   ]);
-
-    // if (emailDuplicate != 0)
-    //   throw new HttpException('Email already used!', 409);
-    // if (usernameDuplicate != 0)
-    //   throw new HttpException('Username already used!', 409);
-    // if (phoneDuplicate != 0)
-    //   throw new HttpException('Phone already used!', 409);
+    const [findStore, findDuplicate] = await Promise.all([
+      this.databaseService.staffs.findFirst({
+        // Make sure only the admin staff that can add new staffs
+        where: {
+          user_id: adminId,
+          store_id: requestBody.store,
+          role: 'Admin',
+        },
+      }),
+      // Prevent the same user being added as a staff more than once
+      this.databaseService.staffs.findFirst({
+        where: {
+          user_id: requestBody.user,
+          store_id: requestBody.store,
+        },
+      }),
+    ]);
+    if (!findStore) throw new NotFoundException('Not found!');
+    if (findDuplicate)
+      throw new HttpException('User already added as staff!', 409);
 
     await this.databaseService.staffs.create({
-      data: requestBody,
+      data: {
+        id: uuidv4(),
+        user_id: requestBody.user,
+        store_id: requestBody.store,
+        role: requestBody.role,
+      },
     });
 
-    this.logger.log('User created!', 'UsersService');
+    this.logger.log('Staff created!', 'StaffsService');
 
-    return 'success';
+    return { status: 'success', data: requestBody };
+  }
+
+  // Set this to allow only 'getAllStaffs' for super admins only (on the controller)
+  async findAll(
+    page: number,
+    limit: number,
+    order: string,
+    keywords?: string,
+    role?: 'Admin' | 'User',
+  ) {
+    const where: Prisma.StaffsWhereInput = {};
+    if (keywords)
+      where.OR = [
+        {
+          user: {
+            name: {
+              contains: keywords,
+              mode: 'insensitive',
+            },
+          },
+        },
+        {
+          stores: {
+            name: {
+              contains: keywords,
+              mode: 'insensitive',
+            },
+          },
+        },
+      ];
+    if (role) {
+      where.role = role;
+    }
+
+    const totalData = await this.databaseService.staffs.count({ where });
+
+    const totalPage = Math.ceil(totalData / limit);
+    const offset = page * limit - limit;
+
+    const orderBy: Prisma.StaffsOrderByWithRelationInput[] = [];
+
+    if (order === 'a-z') {
+      orderBy.push(
+        { user: { name: 'asc' } },
+        { stores: { name: 'asc' } },
+        { id: 'asc' },
+      );
+    } else if (order === 'z-a') {
+      orderBy.push(
+        { user: { name: 'desc' } },
+        { stores: { name: 'asc' } },
+        { id: 'desc' },
+      );
+    } else if (order === 'latest') {
+      orderBy.push({ user: { createdAt: 'desc' } }, { id: 'asc' });
+    } else if (order === 'oldest') {
+      orderBy.push({ user: { createdAt: 'asc' } }, { id: 'desc' });
+    }
+
+    const result = await this.databaseService.staffs.findMany({
+      where,
+      select: {
+        id: true,
+        store_id: true,
+        user_id: true,
+        role: true,
+        createdAt: true,
+        user: {
+          select: {
+            id: true,
+            first_name: true,
+            middle_name: true,
+            last_name: true,
+            name: true,
+            username: true,
+            email: true,
+            phone: true,
+            user_images: {
+              select: {
+                id: true,
+                path: true,
+                type: true,
+              },
+            },
+          },
+        },
+        stores: {
+          select: {
+            id: true,
+            name: true,
+            address: true,
+            store_images: {
+              select: {
+                id: true,
+                path: true,
+                type: true,
+              },
+            },
+          },
+        },
+      },
+      skip: offset,
+      take: limit,
+      orderBy,
+    });
+    if (!result.length) {
+      throw new NotFoundException('Not found!');
+    }
+
+    const finalResult = result.map((obj) => {
+      const userImages = obj.user.user_images.length
+        ? obj.user.user_images.map((obj) => {
+            return { ...obj, path: `${process.env.PROJECT_URL}/${obj.path}` };
+          })
+        : [];
+
+      const storeImages = obj.stores.store_images.length
+        ? obj.stores.store_images.map((obj) => {
+            return { ...obj, path: `${process.env.PROJECT_URL}/${obj.path}` };
+          })
+        : [];
+
+      return {
+        ...obj,
+        user: { ...obj.user, user_images: userImages },
+        stores: { ...obj.stores, store_images: storeImages },
+      };
+    });
+
+    this.logger.log('Stores fetched!', 'StoresService');
+
+    return {
+      totalData,
+      totalPage,
+      page,
+      // data: result,
+      data: finalResult,
+    };
   }
 }
