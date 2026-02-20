@@ -65,7 +65,12 @@ export class StaffsService {
     return { status: 'success', data: requestBody };
   }
 
-  // Set this to allow only 'getAllStaffs' for super admins only (on the controller)
+  /* 
+    -Make logic for 
+     -Allow only super admins to access findAll staffs 
+     -A route for all users to fetch all staffs according to the stores they are assigned
+     -Apply collation in the Stores' name column
+  */
   async findAll(
     page: number,
     limit: number,
