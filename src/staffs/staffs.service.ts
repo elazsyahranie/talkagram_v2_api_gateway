@@ -3,6 +3,7 @@ import {
   Inject,
   HttpException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
@@ -67,12 +68,29 @@ export class StaffsService {
 
   async findAllByStoreId(
     store_id: string,
+    user_id: string,
     page: number,
     limit: number,
     order: string,
     keywords?: string,
     role?: 'Admin' | 'User',
   ) {
+    /* 
+      Make sure that every staffs can only fetch the list of staffs
+      that are assigned to the stores they are assigned to. For example, 
+      if you're not assigned to store A, there's no way you can fetch the
+      list of staffs that are assigned to that store
+    */
+    const isStaff = await this.databaseService.staffs.findFirst({
+      where: {
+        user_id,
+        store_id,
+      },
+    });
+    if (!isStaff) {
+      throw new UnauthorizedException('Unauthorized');
+    }
+
     const where: Prisma.StaffsWhereInput = {};
     where.store_id = store_id;
     if (keywords)
@@ -152,7 +170,10 @@ export class StaffsService {
       };
     });
 
-    this.logger.log('Stores fetched!', 'StoresService');
+    this.logger.log(
+      `Stores fetched by store id: ${store_id}!`,
+      'StoresService',
+    );
 
     return {
       totalData,

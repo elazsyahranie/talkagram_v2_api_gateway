@@ -40,6 +40,7 @@ export class StaffsController {
   @Get('/:id')
   @HttpCode(200)
   findByStore(
+    @Req() req: any,
     @Param('id') id: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
@@ -47,9 +48,11 @@ export class StaffsController {
     @Query('keywords') keywords?: string,
     @Query('role') role?: 'Admin' | 'User',
   ) {
+    const user_id = req.user.id;
     const store_id = id;
     return this.staffsService.findAllByStoreId(
       store_id,
+      user_id,
       page,
       limit,
       order,
