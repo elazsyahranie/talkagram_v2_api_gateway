@@ -13,6 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import { AddStaffDto } from './dto/add-staff.dto';
+import { UpdateStaffDto } from './dto/update-staff.dto';
 // import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -318,5 +319,63 @@ export class StaffsService {
       page,
       data: finalResult,
     };
+  }
+
+  async updateStaffRole(
+    admin_id: string,
+    store_id: string,
+    requestBody: UpdateStaffDto[],
+  ) {
+    // Make sure only the admin staff that can add new staffs
+    const isAdmin = await this.databaseService.staffs.findFirst({
+      where: {
+        user_id: admin_id,
+        store_id: store_id,
+        role: 'Admin',
+      },
+    });
+    if (!isAdmin) {
+      throw new UnauthorizedException('Unauthorized');
+    }
+
+    this.validationService.validate(StaffValidation.UPDATE, requestBody);
+
+    /* Make sure that every stores have at least one admin */
+    // 1) Find admins on the store
+    const findAdmins = await this.databaseService.staffs.findMany({
+      where: { store_id, role: 'Admin' },
+    });
+
+    // 2) If here's only one admin left
+    if (findAdmins.length === 1) {
+      // We'll check whether we're going to make them as a non-admin in our request
+      const findAdminsOnRequest = requestBody.find((obj: UpdateStaffDto) => {
+        return obj.user === findAdmins[0].user_id;
+      });
+
+      // 3) If we do, then prevent next logic from executing
+      if (findAdminsOnRequest && findAdminsOnRequest.role !== 'Admin') {
+        throw new HttpException(
+          'At least one admin is required for a store!',
+          409,
+        );
+      }
+    }
+
+    await Promise.all(
+      requestBody.map(async (obj) => {
+        const findStaff = await this.databaseService.staffs.findFirst({
+          where: { user_id: obj.user, store_id: store_id },
+        });
+
+        if (findStaff)
+          await this.databaseService.staffs.updateMany({
+            where: { user_id: obj.user, store_id: store_id },
+            data: { role: obj.role },
+          });
+      }),
+    );
+
+    return { status: 'success' };
   }
 }

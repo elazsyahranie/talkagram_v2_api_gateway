@@ -19,6 +19,7 @@ import { StaffsService } from './staffs.service';
 import { Prisma } from '@prisma/client';
 import { AddStaffDto } from './dto/add-staff.dto';
 import { IsSuperAdminGuard } from 'src/auth/issuperadmin.guard';
+import { UpdateStaffDto } from './dto/update-staff.dto';
 
 @Controller('staffs')
 export class StaffsController {
@@ -75,16 +76,17 @@ export class StaffsController {
     return this.staffsService.findAll(page, limit, order, keywords, role);
   }
 
-  @Patch()
-  @Public()
+  @Patch('/:id')
+  // @Public()
   @HttpCode(200)
-  // @UseInterceptors(
-  //   AnyFilesInterceptor(),
-  //   FileInterceptor('profile', multerImageConfig('images', 'image')),
-  //   FileInterceptor('header', multerImageConfig('images', 'image')),
-  // )
-  update() {
-    return 'success update';
+  update(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() staffData: UpdateStaffDto[],
+  ) {
+    const adminId = req.user.id; // The id of user that sent request to this route
+    const storeId = id;
+    return this.staffsService.updateStaffRole(adminId, storeId, staffData);
   }
 
   @Delete()
