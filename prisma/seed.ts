@@ -19,7 +19,7 @@ async function main() {
     const email = name.toLowerCase().replaceAll(' ', '_') + '@yopmail.com';
     const phone = '08' + faker.phone.number().replace(/[^0-9]/g, '');
 
-    const role = i < 5 ? 'Admin' : 'User';
+    const role = i < 5 ? 'Super Admin' : 'User';
     users.push({
       email,
       name,

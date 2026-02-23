@@ -65,18 +65,110 @@ export class StaffsService {
     return { status: 'success', data: requestBody };
   }
 
-  /* 
-    -Make logic for 
-     -Allow only super admins to access findAll staffs 
-     -A route for all users to fetch all staffs according to the stores they are assigned
-     -Apply collation in the Stores' name column
-  */
+  async findAllByStoreId(
+    store_id: string,
+    page: number,
+    limit: number,
+    order: string,
+    keywords?: string,
+    role?: 'Admin' | 'User',
+  ) {
+    const where: Prisma.StaffsWhereInput = {};
+    where.store_id = store_id;
+    if (keywords)
+      where.user = {
+        name: {
+          contains: keywords,
+          mode: 'insensitive',
+        },
+      };
+    if (role) {
+      where.role = role;
+    }
+
+    const totalData = await this.databaseService.staffs.count({ where });
+
+    const totalPage = Math.ceil(totalData / limit);
+    const offset = page * limit - limit;
+
+    const orderBy: Prisma.StaffsOrderByWithRelationInput[] = [];
+
+    if (order === 'a-z') {
+      orderBy.push({ user: { name: 'asc' } }, { id: 'asc' });
+    } else if (order === 'z-a') {
+      orderBy.push({ user: { name: 'desc' } }, { id: 'desc' });
+    } else if (order === 'latest') {
+      orderBy.push({ user: { createdAt: 'desc' } }, { id: 'asc' });
+    } else if (order === 'oldest') {
+      orderBy.push({ user: { createdAt: 'asc' } }, { id: 'desc' });
+    }
+
+    const result = await this.databaseService.staffs.findMany({
+      where,
+      select: {
+        id: true,
+        store_id: true,
+        user_id: true,
+        role: true,
+        createdAt: true,
+        user: {
+          select: {
+            id: true,
+            first_name: true,
+            middle_name: true,
+            last_name: true,
+            name: true,
+            username: true,
+            email: true,
+            phone: true,
+            user_images: {
+              select: {
+                id: true,
+                path: true,
+                type: true,
+              },
+            },
+          },
+        },
+      },
+      skip: offset,
+      take: limit,
+      orderBy,
+    });
+    if (!result.length) {
+      throw new NotFoundException('Not found!');
+    }
+
+    const finalResult = result.map((obj) => {
+      const userImages = obj.user.user_images.length
+        ? obj.user.user_images.map((obj) => {
+            return { ...obj, path: `${process.env.PROJECT_URL}/${obj.path}` };
+          })
+        : [];
+
+      return {
+        ...obj,
+        user: { ...obj.user, user_images: userImages },
+      };
+    });
+
+    this.logger.log('Stores fetched!', 'StoresService');
+
+    return {
+      totalData,
+      totalPage,
+      page,
+      data: finalResult,
+    };
+  }
+
   async findAll(
     page: number,
     limit: number,
     order: string,
     keywords?: string,
     role?: 'Admin' | 'User',
+    // store_id?: string,
   ) {
     const where: Prisma.StaffsWhereInput = {};
     if (keywords)
@@ -203,7 +295,6 @@ export class StaffsService {
       totalData,
       totalPage,
       page,
-      // data: result,
       data: finalResult,
     };
   }

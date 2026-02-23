@@ -11,12 +11,14 @@ import {
   Query,
   DefaultValuePipe,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { Logger } from 'winston';
 import { Public } from 'src/decorators/public.decorator';
 import { StaffsService } from './staffs.service';
 import { Prisma } from '@prisma/client';
 import { AddStaffDto } from './dto/add-staff.dto';
+import { IsSuperAdminGuard } from 'src/auth/issuperadmin.guard';
 
 @Controller('staffs')
 export class StaffsController {
@@ -35,9 +37,30 @@ export class StaffsController {
     return 'get profile';
   }
 
+  @Get('/:id')
+  @HttpCode(200)
+  findByStore(
+    @Param('id') id: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Query('order', new DefaultValuePipe('a-z')) order: string,
+    @Query('keywords') keywords?: string,
+    @Query('role') role?: 'Admin' | 'User',
+  ) {
+    const store_id = id;
+    return this.staffsService.findAllByStoreId(
+      store_id,
+      page,
+      limit,
+      order,
+      keywords,
+      role,
+    );
+  }
+
   @Get()
   @HttpCode(200)
-  @Public()
+  @UseGuards(IsSuperAdminGuard)
   findAll(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
@@ -46,7 +69,6 @@ export class StaffsController {
     @Query('role') role?: 'Admin' | 'User',
   ) {
     //   @Query('role') role?: 'Admin' | 'User', //   @Query('keywords') keywords?: string, //   @Query('order', new DefaultValuePipe('a-z')) order: string, //   @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number, //   @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number, // }, //   limit?: number; //   page?: number; //   role?: 'Admin' | 'User'; //   keywords?: string; // query: { // @Query()
-    // return 'get all success';
     return this.staffsService.findAll(page, limit, order, keywords, role);
   }
 

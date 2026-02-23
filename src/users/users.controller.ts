@@ -31,7 +31,7 @@ import {
 // import { extname } from 'path';
 import { multerImageConfig } from 'src/file-upload.util';
 import { Public } from 'src/decorators/public.decorator';
-import { IsAdminGuard } from 'src/auth/isadmin.guard';
+import { IsSuperAdminGuard } from 'src/auth/issuperadmin.guard';
 // import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('users')
@@ -161,7 +161,7 @@ export class UsersController {
   // For admins only
   @Delete('/:id')
   @HttpCode(200)
-  @UseGuards(IsAdminGuard)
+  @UseGuards(IsSuperAdminGuard)
   deleteById(@Param('id') id: string) {
     return this.usersService.delete(id);
   }
