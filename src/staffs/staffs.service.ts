@@ -378,4 +378,62 @@ export class StaffsService {
 
     return { status: 'success' };
   }
+
+  async deleteStaff(admin_id: string, store_id: string, user_ids: string) {
+    const users = user_ids.split(',');
+
+    // Make sure only the admin staff that can add new staffs
+    const isAdmin = await this.databaseService.staffs.findFirst({
+      where: {
+        user_id: admin_id,
+        store_id: store_id,
+        role: 'Admin',
+      },
+    });
+    if (!isAdmin) {
+      throw new UnauthorizedException('Unauthorized');
+    }
+
+    /* Make sure that every stores have at least one admin */
+    // 1) Find admins on the store
+    const findAdmins = await this.databaseService.staffs.findMany({
+      where: { store_id, role: 'Admin' },
+    });
+
+    // 2) If here's only one admin left
+    if (findAdmins.length === 1) {
+      // We'll check whether we're going to make them as a non-admin in our request
+      const findAdminsOnRequest = users.find((id: string) => {
+        return id === findAdmins[0].user_id;
+      });
+
+      // 3) If we do, then prevent next logic from executing
+      if (findAdminsOnRequest) {
+        throw new HttpException(
+          'At least one admin is required for a store!',
+          409,
+        );
+      }
+    }
+
+    let numberOfStaffsDeleted = 0;
+    await Promise.all(
+      users.map(async (user_id) => {
+        const findStaff = await this.databaseService.staffs.findFirst({
+          where: { user_id, store_id },
+        });
+
+        if (findStaff) {
+          await this.databaseService.staffs.deleteMany({
+            where: { user_id, store_id },
+          });
+          numberOfStaffsDeleted++;
+        }
+      }),
+    );
+
+    this.logger.log(`${numberOfStaffsDeleted} staffs deleted`, 'StaffsService');
+
+    return { status: 'success' };
+  }
 }

@@ -89,15 +89,14 @@ export class StaffsController {
     return this.staffsService.updateStaffRole(adminId, storeId, staffData);
   }
 
-  @Delete()
-  @Public()
+  @Delete('/:store/:user')
   @HttpCode(200)
-  // @UseInterceptors(
-  //   AnyFilesInterceptor(),
-  //   FileInterceptor('profile', multerImageConfig('images', 'image')),
-  //   FileInterceptor('header', multerImageConfig('images', 'image')),
-  // )
-  delete() {
-    return 'success delete';
+  delete(
+    @Req() req: any,
+    @Param('store') store_id: string,
+    @Param('user') user_ids: string,
+  ) {
+    const adminId = req.user.id; // The id of user that sent request to this route
+    return this.staffsService.deleteStaff(adminId, store_id, user_ids);
   }
 }
