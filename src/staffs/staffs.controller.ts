@@ -13,10 +13,7 @@ import {
   ParseIntPipe,
   UseGuards,
 } from '@nestjs/common';
-import { Logger } from 'winston';
-import { Public } from 'src/decorators/public.decorator';
 import { StaffsService } from './staffs.service';
-import { Prisma } from '@prisma/client';
 import { AddStaffDto } from './dto/add-staff.dto';
 import { IsSuperAdminGuard } from 'src/auth/issuperadmin.guard';
 import { UpdateStaffDto } from './dto/update-staff.dto';
@@ -29,13 +26,6 @@ export class StaffsController {
   async create(@Req() req: any, @Body() staffData: AddStaffDto) {
     const adminId = req.user.id; // The id of user that sent request to this route
     return this.staffsService.create(adminId, staffData);
-  }
-
-  @Get('/profile')
-  @HttpCode(200)
-  @Public()
-  getProfile() {
-    return 'get profile';
   }
 
   @Get('/:id')
