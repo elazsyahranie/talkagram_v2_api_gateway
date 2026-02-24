@@ -25,46 +25,76 @@ export class StaffsService {
     private readonly databaseService: DatabaseService,
   ) {}
 
-  /* 
-    Lanjut lagi:
-    -Teruskan ke CRUD yang lain
-  */
-  async create(adminId: string, requestBody: AddStaffDto) {
+  async create(admin_id: string, store_id: string, requestBody: AddStaffDto[]) {
     this.validationService.validate(StaffValidation.CREATE, requestBody);
 
-    const [findStore, findDuplicate] = await Promise.all([
-      this.databaseService.staffs.findFirst({
-        // Make sure only the admin staff that can add new staffs
-        where: {
-          user_id: adminId,
-          store_id: requestBody.store,
-          role: 'Admin',
-        },
-      }),
-      // Prevent the same user being added as a staff more than once
-      this.databaseService.staffs.findFirst({
-        where: {
-          user_id: requestBody.user,
-          store_id: requestBody.store,
-        },
-      }),
-    ]);
-    if (!findStore) throw new NotFoundException('Not found!');
-    if (findDuplicate)
-      throw new HttpException('User already added as staff!', 409);
-
-    await this.databaseService.staffs.create({
-      data: {
-        id: uuidv4(),
-        user_id: requestBody.user,
-        store_id: requestBody.store,
-        role: requestBody.role,
+    // Make sure only the admin staff that can add new staffs
+    const isAdmin = await this.databaseService.staffs.findFirst({
+      where: {
+        user_id: admin_id,
+        store_id: store_id,
+        role: 'Admin',
       },
     });
+    if (!isAdmin) {
+      throw new UnauthorizedException('Unauthorized');
+    }
 
-    this.logger.log('Staff created!', 'StaffsService');
+    // const [findStore, findDuplicate] = await Promise.all([
+    //   this.databaseService.staffs.findFirst({
+    //     // Make sure only the admin staff that can add new staffs
+    //     where: {
+    //       user_id: adminId,
+    //       store_id: requestBody.store,
+    //       role: 'Admin',
+    //     },
+    //   }),
+    //   // Prevent the same user being added as a staff more than once
+    //   this.databaseService.staffs.findFirst({
+    //     where: {
+    //       user_id: requestBody.user,
+    //       store_id: requestBody.store,
+    //     },
+    //   }),
+    // ]);
+    // if (!findStore) throw new NotFoundException('Not found!');
+    // if (findDuplicate)
+    //   throw new HttpException('User already added as staff!', 409);
 
-    return { status: 'success', data: requestBody };
+    // await this.databaseService.staffs.create({
+    //   data: {
+    //     id: uuidv4(),
+    //     user_id: requestBody.user,
+    //     store_id: requestBody.store,
+    //     role: requestBody.role,
+    //   },
+    // });
+
+    let staffsAdded = 0;
+    await Promise.all(
+      requestBody.map(async (obj) => {
+        const findStaff = await this.databaseService.staffs.findFirst({
+          where: { user_id: obj.user, store_id },
+        });
+
+        // Prevent a user to be added as a staff if they're already did
+        if (!findStaff) {
+          await this.databaseService.staffs.create({
+            data: {
+              id: uuidv4(),
+              user_id: obj.user,
+              store_id,
+              role: obj.role,
+            },
+          });
+          staffsAdded++;
+        }
+      }),
+    );
+
+    this.logger.log(`${staffsAdded} staffs added!`, 'StaffsService');
+
+    return { status: 'success' };
   }
 
   async findAllByStoreId(

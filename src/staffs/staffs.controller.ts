@@ -21,11 +21,16 @@ import { UpdateStaffDto } from './dto/update-staff.dto';
 @Controller('staffs')
 export class StaffsController {
   constructor(private readonly staffsService: StaffsService) {}
-  @Post()
+  @Post('/:id')
   @HttpCode(201)
-  async create(@Req() req: any, @Body() staffData: AddStaffDto) {
+  async create(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Body() staffData: AddStaffDto[],
+  ) {
     const adminId = req.user.id; // The id of user that sent request to this route
-    return this.staffsService.create(adminId, staffData);
+    const storeId = id;
+    return this.staffsService.create(adminId, storeId, staffData);
   }
 
   @Get('/:id')
