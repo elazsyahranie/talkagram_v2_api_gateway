@@ -14,7 +14,6 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import { AddStaffDto } from './dto/add-staff.dto';
 import { UpdateStaffDto } from './dto/update-staff.dto';
-// import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class StaffsService {
@@ -39,36 +38,6 @@ export class StaffsService {
     if (!isAdmin) {
       throw new UnauthorizedException('Unauthorized');
     }
-
-    // const [findStore, findDuplicate] = await Promise.all([
-    //   this.databaseService.staffs.findFirst({
-    //     // Make sure only the admin staff that can add new staffs
-    //     where: {
-    //       user_id: adminId,
-    //       store_id: requestBody.store,
-    //       role: 'Admin',
-    //     },
-    //   }),
-    //   // Prevent the same user being added as a staff more than once
-    //   this.databaseService.staffs.findFirst({
-    //     where: {
-    //       user_id: requestBody.user,
-    //       store_id: requestBody.store,
-    //     },
-    //   }),
-    // ]);
-    // if (!findStore) throw new NotFoundException('Not found!');
-    // if (findDuplicate)
-    //   throw new HttpException('User already added as staff!', 409);
-
-    // await this.databaseService.staffs.create({
-    //   data: {
-    //     id: uuidv4(),
-    //     user_id: requestBody.user,
-    //     store_id: requestBody.store,
-    //     role: requestBody.role,
-    //   },
-    // });
 
     let staffsAdded = 0;
     await Promise.all(
