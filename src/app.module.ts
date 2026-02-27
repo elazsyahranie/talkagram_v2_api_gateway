@@ -20,6 +20,7 @@ import { RedisModule } from './redis.module';
 import { StaffsModule } from './staffs/staffs.module';
 import { StoresController } from './stores/stores.controller';
 import { StoresService } from './stores/stores.service';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { StoresService } from './stores/stores.service';
     DatabaseModule,
     EmployeesModule,
     CommonModule,
+    ChatModule,
     WinstonModule.forRoot(winstonConfig),
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), 'uploads'),
