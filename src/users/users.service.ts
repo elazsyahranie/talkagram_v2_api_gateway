@@ -146,7 +146,7 @@ export class UsersService {
       email: findUser.email,
     });
 
-    this.logger.log('User created!', 'UsersService');
+    this.logger.log('User logged in!', 'UsersService');
 
     return {
       name: findUser.name,
