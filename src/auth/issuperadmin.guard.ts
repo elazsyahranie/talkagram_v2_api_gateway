@@ -16,7 +16,7 @@ export class IsSuperAdminGuard implements CanActivate {
     if (request.user.role === 'Super Admin') {
       return true;
     } else {
-      throw new UnauthorizedException('Unauthorized');
+      throw new UnauthorizedException();
     }
   }
 }

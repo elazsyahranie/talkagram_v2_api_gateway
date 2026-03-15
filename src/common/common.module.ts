@@ -4,6 +4,8 @@ import { ValidationService } from './validation.service';
 import { MulterModule } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { APP_FILTER } from '@nestjs/core';
+import { ExceptionsFilter } from './exceptions.filter';
 
 @Global()
 @Module({
@@ -16,6 +18,10 @@ import { extname } from 'path';
     // PrismaService,
     ValidationService,
     // { provide: APP_FILTER, useClass: ErrorFilter },
+    {
+      provide: APP_FILTER,
+      useClass: ExceptionsFilter,
+    },
   ],
   exports: [ValidationService],
 })

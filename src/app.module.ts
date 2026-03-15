@@ -12,8 +12,8 @@ import { AuthModule } from './auth/auth.module';
 import { CompaniesModule } from './companies/companies.module';
 import { WinstonModule } from 'nest-winston';
 import { winstonConfig } from './logger/winston.config';
-import { ExceptionsFilter } from './common/exceptions.filter';
-import { APP_FILTER } from '@nestjs/core';
+// import { ExceptionsFilter } from './common/exceptions.filter';
+// import { APP_FILTER } from '@nestjs/core';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { RedisModule } from './redis.module';
@@ -21,9 +21,22 @@ import { StaffsModule } from './staffs/staffs.module';
 import { StoresController } from './stores/stores.controller';
 import { StoresService } from './stores/stores.service';
 import { ChatModule } from './chat/chat.module';
+// import { ClientsModule, Transport } from '@nestjs/microservices';
 
 @Module({
   imports: [
+    // ClientsModule.register([
+    //   {
+    //     name: 'USERS_SERVICE',
+    //     transport: Transport.TCP,
+    //     options: {
+    //       host: process.env.USERS_SERVICE_HOST || 'localhost',
+    //       port: process.env.USERS_SERVICE_PORT
+    //         ? parseInt(process.env.USERS_SERVICE_PORT, 10)
+    //         : 3001,
+    //     },
+    //   },
+    // ]),
     UsersModule,
     DatabaseModule,
     EmployeesModule,
@@ -49,10 +62,10 @@ import { ChatModule } from './chat/chat.module';
   providers: [
     AppService,
     // { provide: APP_GUARD, useClass: ThrottlerGuard } Activates the throttle
-    {
-      provide: APP_FILTER,
-      useClass: ExceptionsFilter,
-    },
+    // {
+    //   provide: APP_FILTER,
+    //   useClass: ExceptionsFilter,
+    // },
     StoresService,
   ],
   exports: [WinstonModule],

@@ -16,9 +16,11 @@ import {
   ParseIntPipe,
   DefaultValuePipe,
   UploadedFiles,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { Prisma } from '@prisma/client';
+// import { Prisma } from '@prisma/client';
 import { LoginUserDto } from './dto/login-user.dto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
@@ -33,6 +35,11 @@ import { multerImageConfig } from 'src/file-upload.util';
 import { Public } from 'src/decorators/public.decorator';
 import { IsSuperAdminGuard } from 'src/auth/issuperadmin.guard';
 // import { UpdateUserDto } from './dto/update-user.dto';
+import { ClientProxy } from '@nestjs/microservices';
+import { firstValueFrom, timeout, catchError, throwError } from 'rxjs';
+import { USERS_SERVICE_UNAVAILABE_OR_CRASHED } from 'src/common/constants';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('users')
 export class UsersController {
@@ -40,6 +47,7 @@ export class UsersController {
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
     private readonly usersService: UsersService,
+    @Inject('USERS_SERVICE') private readonly userClient: ClientProxy,
   ) {}
   // private readonly logger = new MyLoggerService(UsersController.name);
 
@@ -47,10 +55,32 @@ export class UsersController {
   @HttpCode(200)
   @Public()
   async login(@Body() request: LoginUserDto) {
-    const result = await this.usersService.login(request);
-    return {
-      data: result,
-    };
+    try {
+      // Kalau MessagePattern nya salah, masih belum ketemu pesan error yang spesifik untuk itu
+      // Tapi yowes gpp itu nanti dulu
+      const result = await firstValueFrom(
+        this.userClient.send({ cmd: 'usersLogin' }, request).pipe(
+          timeout(5000),
+          catchError((error) => {
+            console.dir(error.message, { depth: null });
+            throw new HttpException(
+              error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+              error.code || HttpStatus.SERVICE_UNAVAILABLE,
+            );
+          }),
+        ),
+      );
+
+      return result;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   @Post()
@@ -69,33 +99,80 @@ export class UsersController {
       multerImageConfig('images', 'image'),
     ),
   )
-  create(
-    @Body() userData: Prisma.UsersCreateInput,
+  async create(
+    @Body() userData: CreateUserDto,
     // @UploadedFile() profile: Express.Multer.File,
-    @UploadedFiles()
-    files: {
-      profile?: Express.Multer.File[];
-      header?: Express.Multer.File[];
-    },
+    // @UploadedFiles()
+    // files: {
+    //   profile?: Express.Multer.File[];
+    //   header?: Express.Multer.File[];
+    // },
   ) {
-    return this.usersService.create(
-      userData,
-      files.profile ? files.profile[0] : undefined,
-      files.header ? files.header[0] : undefined,
-    );
+    try {
+      const result = await firstValueFrom(
+        this.userClient.send({ cmd: 'usersRegister' }, userData).pipe(
+          timeout(5000),
+          catchError((error) => {
+            throw new HttpException(
+              error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+              error.code || HttpStatus.SERVICE_UNAVAILABLE,
+            );
+          }),
+        ),
+      );
+
+      return result;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+    // return this.usersService.create(
+    //   userData,
+    //   files.profile ? files.profile[0] : undefined,
+    //   files.header ? files.header[0] : undefined,
+    // );
   }
 
   @Get('/profile')
   @HttpCode(200)
-  getProfile(@Req() req: any) {
+  async getProfile(@Req() req: any) {
     const { id } = req.user;
     this.logger.log(`Profile ${id} fetched`, 'UsersService');
-    return this.usersService.findOne(id);
+    try {
+      const result = await firstValueFrom(
+        this.userClient.send({ cmd: 'usersGetProfile' }, id).pipe(
+          timeout(5000),
+          catchError((error) => {
+            // console.dir(error.message, { depth: null });
+            throw new HttpException(
+              error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+              error.code || HttpStatus.SERVICE_UNAVAILABLE,
+            );
+          }),
+        ),
+      );
+
+      return result;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+    // return this.usersService.findOne(id);
   }
 
   @Get()
   @HttpCode(200)
-  findAll(
+  async findAll(
     // @Query()
     // query: {
     //   keywords?: string;
@@ -109,15 +186,63 @@ export class UsersController {
     @Query('keywords') keywords?: string,
     @Query('role') role?: 'Admin' | 'User',
   ) {
-    return this.usersService.findAll(page, limit, order, keywords, role);
+    try {
+      const result = await firstValueFrom(
+        this.userClient
+          .send({ cmd: 'usersGetAll' }, { page, limit, order, keywords, role })
+          .pipe(
+            timeout(5000),
+            catchError((error) => {
+              throw new HttpException(
+                error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+                error.code || HttpStatus.SERVICE_UNAVAILABLE,
+              );
+            }),
+          ),
+      );
+
+      return result;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+    // return this.usersService.findAll(page, limit, order, keywords, role);
   }
 
   // ParseIntPipe
   @Get(':id')
   @HttpCode(200)
-  findOne(@Param('id') id: string) {
-    this.logger.log(`User id:${id} fetched`, 'UsersService');
-    return this.usersService.findOne(id);
+  async findOne(@Param('id') id: string) {
+    // this.logger.log(`User id:${id} fetched`, 'UsersService');
+    try {
+      console.dir(id, { depth: null });
+      const result = await firstValueFrom(
+        this.userClient.send({ cmd: 'usersGetDetail' }, id).pipe(
+          timeout(5000),
+          catchError((error) => {
+            throw new HttpException(
+              error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+              error.code || HttpStatus.SERVICE_UNAVAILABLE,
+            );
+          }),
+        ),
+      );
+
+      return result;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   // Sending a competely blank form-data would throw error message
@@ -139,9 +264,9 @@ export class UsersController {
       multerImageConfig('images', 'image'),
     ),
   )
-  update(
+  async update(
     @Body(new ValidationPipe({ whitelist: true }))
-    updatedUser: Prisma.UsersUpdateInput,
+    updatedUser: UpdateUserDto,
     @UploadedFiles()
     files: {
       profile?: Express.Multer.File[];
@@ -150,26 +275,101 @@ export class UsersController {
     @Req() req: any,
   ) {
     const { id } = req.user;
-    return this.usersService.update(
-      id,
-      updatedUser,
-      files?.profile?.[0],
-      files?.header?.[0],
-    );
+    // return this.usersService.update(
+    //   id,
+    //   updatedUser,
+    //   files?.profile?.[0],
+    //   files?.header?.[0],
+    // );
+    try {
+      // console.dir(updatedUser, { depth: null });
+      const result = await firstValueFrom(
+        this.userClient.send({ cmd: 'usersUpdate' }, { id, updatedUser }).pipe(
+          timeout(5000),
+          catchError((error) => {
+            throw new HttpException(
+              error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+              error.code || HttpStatus.SERVICE_UNAVAILABLE,
+            );
+          }),
+        ),
+      );
+
+      return result;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   // For admins only
   @Delete('/:id')
   @HttpCode(200)
   @UseGuards(IsSuperAdminGuard)
-  deleteById(@Param('id') id: string) {
-    return this.usersService.delete(id);
+  async deleteById(@Param('id') id: string, @Req() req: any) {
+    // return this.usersService.delete(id);
+    try {
+      const admin_id = req.user.id;
+      // console.dir(id, { depth: null });
+      const result = await firstValueFrom(
+        this.userClient
+          .send({ cmd: 'usersDeleteForAdmin' }, { id, admin_id })
+          .pipe(
+            timeout(5000),
+            catchError((error) => {
+              throw new HttpException(
+                error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+                error.code || HttpStatus.SERVICE_UNAVAILABLE,
+              );
+            }),
+          ),
+      );
+
+      return result;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   @Delete()
   @HttpCode(200)
-  delete(@Req() req: any) {
-    const { id } = req.user;
-    return this.usersService.delete(id);
+  async delete(@Req() req: any) {
+    // return this.usersService.delete(id);
+    try {
+      const { id } = req.user;
+      // console.dir(id, { depth: null });
+      const result = await firstValueFrom(
+        this.userClient.send({ cmd: 'usersDelete' }, id).pipe(
+          timeout(5000),
+          catchError((error) => {
+            throw new HttpException(
+              error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+              error.code || HttpStatus.SERVICE_UNAVAILABLE,
+            );
+          }),
+        ),
+      );
+
+      return result;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 }
