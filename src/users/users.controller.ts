@@ -68,32 +68,38 @@ export class UsersController {
   @HttpCode(200)
   @Public()
   async login(@Body() request: LoginUserDto) {
-    try {
-      // Kalau MessagePattern nya salah, masih belum ketemu pesan error yang spesifik untuk itu
-      // Tapi yowes gpp itu nanti dulu
-      const result = await firstValueFrom(
-        this.userClient.send({ cmd: 'usersLogin' }, request).pipe(
-          timeout(5000),
-          catchError((error) => {
-            console.dir(error.message, { depth: null });
-            throw new HttpException(
-              error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
-              error.code || HttpStatus.SERVICE_UNAVAILABLE,
-            );
-          }),
-        ),
-      );
+    /* 
+      NOTE: Masih belum ketemu pesan error yang cocok kalau MessagePattern nya salah, 
+      atau kalau service yang dituju tidak aktif atau sedang tidak bisa diakses. Untuk 
+      saat ini mungkin dibiarkan dulu saja. Paling nanti error nya secara detail di log,
+      jangan di return apalagi sampai detailnya ke client/frontend. Malah riskan dari segi
+      security
+    */
+    // try {
+    const result = await firstValueFrom(
+      this.userClient.send({ cmd: 'usersLogin' }, request).pipe(
+        timeout(5000),
+        catchError((error) => {
+          // console.log('Login error');
+          // console.dir(error.message, { depth: null });
+          throw new HttpException(
+            error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+            error.code || HttpStatus.SERVICE_UNAVAILABLE,
+          );
+        }),
+      ),
+    );
 
-      return result;
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      throw new HttpException(
-        USERS_SERVICE_UNAVAILABE_OR_CRASHED,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+    return result;
+    // } catch (error) {
+    //   if (error instanceof HttpException) {
+    //     throw error;
+    //   }
+    //   throw new HttpException(
+    //     USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+    //     HttpStatus.INTERNAL_SERVER_ERROR,
+    //   );
+    // }
   }
 
   @Post()
@@ -121,7 +127,6 @@ export class UsersController {
       header?: Express.Multer.File[];
     },
   ) {
-    // try {
     const result = await firstValueFrom(
       this.userClient.send({ cmd: 'usersRegister' }, userData).pipe(
         timeout(5000),
@@ -133,19 +138,9 @@ export class UsersController {
         }),
       ),
     );
-    // } catch (error) {
-    //   if (error instanceof HttpException) {
-    //     throw error;
-    //   }
-    //   throw new HttpException(
-    //     USERS_SERVICE_UNAVAILABE_OR_CRASHED,
-    //     HttpStatus.INTERNAL_SERVER_ERROR,
-    //   );
-    // }
 
     if (files) {
       const formData = new FormData();
-      // formData.append('user_id', result.user_id);
 
       if (files.profile)
         formData.append(
@@ -159,9 +154,6 @@ export class UsersController {
           files.header[0].buffer,
           files.header[0].originalname,
         );
-
-      // console.log('-Result user id-');
-      // console.dir(result.user_id);
 
       await axios
         .post(
@@ -186,32 +178,22 @@ export class UsersController {
   @HttpCode(200)
   async getProfile(@Req() req: any) {
     const { id } = req.user;
-    this.logger.log(`Profile ${id} fetched`, 'UsersService');
-    try {
-      const result = await firstValueFrom(
-        this.userClient.send({ cmd: 'usersGetProfile' }, id).pipe(
-          timeout(5000),
-          catchError((error) => {
-            // console.dir(error.message, { depth: null });
-            throw new HttpException(
-              error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
-              error.code || HttpStatus.SERVICE_UNAVAILABLE,
-            );
-          }),
-        ),
-      );
 
-      return result;
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      throw new HttpException(
-        USERS_SERVICE_UNAVAILABE_OR_CRASHED,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-    // return this.usersService.findOne(id);
+    const result = await firstValueFrom(
+      this.userClient.send({ cmd: 'usersGetProfile' }, id).pipe(
+        timeout(5000),
+        catchError((error) => {
+          throw new HttpException(
+            error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+            error.code || HttpStatus.SERVICE_UNAVAILABLE,
+          );
+        }),
+      ),
+    );
+
+    this.logger.log(`Profile ${id} fetched`, 'UsersService');
+
+    return result;
   }
 
   @Get()
@@ -262,29 +244,19 @@ export class UsersController {
   @Get(':id')
   @HttpCode(200)
   async findOne(@Param('id') id: string) {
-    try {
-      const result = await firstValueFrom(
-        this.userClient.send({ cmd: 'usersGetDetail' }, id).pipe(
-          timeout(5000),
-          catchError((error) => {
-            throw new HttpException(
-              error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
-              error.code || HttpStatus.SERVICE_UNAVAILABLE,
-            );
-          }),
-        ),
-      );
+    const result = await firstValueFrom(
+      this.userClient.send({ cmd: 'usersGetDetail' }, id).pipe(
+        timeout(5000),
+        catchError((error) => {
+          throw new HttpException(
+            error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+            error.code || HttpStatus.SERVICE_UNAVAILABLE,
+          );
+        }),
+      ),
+    );
 
-      return result;
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      throw new HttpException(
-        USERS_SERVICE_UNAVAILABE_OR_CRASHED,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+    return result;
   }
 
   // Sending a competely blank form-data would throw error message
