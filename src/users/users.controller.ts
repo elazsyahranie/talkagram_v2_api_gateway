@@ -16,10 +16,11 @@ import {
   ParseIntPipe,
   DefaultValuePipe,
   UploadedFiles,
+  // UploadedFile,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { UsersService } from './users.service';
+// import { UsersService } from './users.service';
 // import { Prisma } from '@prisma/client';
 import { LoginUserDto } from './dto/login-user.dto';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
@@ -36,17 +37,29 @@ import { Public } from 'src/decorators/public.decorator';
 import { IsSuperAdminGuard } from 'src/auth/issuperadmin.guard';
 // import { UpdateUserDto } from './dto/update-user.dto';
 import { ClientProxy } from '@nestjs/microservices';
-import { firstValueFrom, timeout, catchError, throwError } from 'rxjs';
-import { USERS_SERVICE_UNAVAILABE_OR_CRASHED } from 'src/common/constants';
+import {
+  firstValueFrom,
+  timeout,
+  catchError,
+  // throwError
+} from 'rxjs';
+import {
+  MEDIA_SERVICE_HTTP_URL,
+  USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+} from 'src/common/constants';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-
+import axios from 'axios';
+import FormData from 'form-data';
+import * as dotenv from 'dotenv';
+dotenv.config();
+// import http from 'http';
 @Controller('users')
 export class UsersController {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
-    private readonly usersService: UsersService,
+    // private readonly usersService: UsersService,
     @Inject('USERS_SERVICE') private readonly userClient: ClientProxy,
   ) {}
   // private readonly logger = new MyLoggerService(UsersController.name);
@@ -86,7 +99,7 @@ export class UsersController {
   @Post()
   @HttpCode(201)
   // @UseInterceptors(
-  //   FileInterceptor('profile', multerImageConfig('images', 'image')),
+  //   FileInterceptor('file', multerImageConfig('images', 'image')),
   //   FileInterceptor('header', multerImageConfig('images', 'image')),
   // )
   @Public()
@@ -96,46 +109,77 @@ export class UsersController {
         { name: 'profile', maxCount: 1 },
         { name: 'header', maxCount: 1 },
       ],
-      multerImageConfig('images', 'image'),
+      // multerImageConfig('images', 'image'),
     ),
   )
   async create(
     @Body() userData: CreateUserDto,
     // @UploadedFile() profile: Express.Multer.File,
-    // @UploadedFiles()
-    // files: {
-    //   profile?: Express.Multer.File[];
-    //   header?: Express.Multer.File[];
-    // },
+    @UploadedFiles()
+    files: {
+      profile?: Express.Multer.File[];
+      header?: Express.Multer.File[];
+    },
   ) {
-    try {
-      const result = await firstValueFrom(
-        this.userClient.send({ cmd: 'usersRegister' }, userData).pipe(
-          timeout(5000),
-          catchError((error) => {
-            throw new HttpException(
-              error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
-              error.code || HttpStatus.SERVICE_UNAVAILABLE,
-            );
-          }),
-        ),
-      );
+    // try {
+    const result = await firstValueFrom(
+      this.userClient.send({ cmd: 'usersRegister' }, userData).pipe(
+        timeout(5000),
+        catchError((error) => {
+          throw new HttpException(
+            error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+            error.code || HttpStatus.SERVICE_UNAVAILABLE,
+          );
+        }),
+      ),
+    );
+    // } catch (error) {
+    //   if (error instanceof HttpException) {
+    //     throw error;
+    //   }
+    //   throw new HttpException(
+    //     USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+    //     HttpStatus.INTERNAL_SERVER_ERROR,
+    //   );
+    // }
 
-      return result;
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      throw new HttpException(
-        USERS_SERVICE_UNAVAILABE_OR_CRASHED,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+    if (files) {
+      const formData = new FormData();
+      // formData.append('user_id', result.user_id);
+
+      if (files.profile)
+        formData.append(
+          'profile',
+          files.profile[0].buffer,
+          files.profile[0].originalname,
+        );
+      if (files.header)
+        formData.append(
+          'header',
+          files.header[0].buffer,
+          files.header[0].originalname,
+        );
+
+      // console.log('-Result user id-');
+      // console.dir(result.user_id);
+
+      await axios
+        .post(
+          `${MEDIA_SERVICE_HTTP_URL}/user-images/${result.user_id}`,
+          formData,
+          {
+            headers: formData.getHeaders(),
+          },
+        )
+        .catch((error) => {
+          throw new HttpException(
+            error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+            error.code || HttpStatus.SERVICE_UNAVAILABLE,
+          );
+        });
     }
-    // return this.usersService.create(
-    //   userData,
-    //   files.profile ? files.profile[0] : undefined,
-    //   files.header ? files.header[0] : undefined,
-    // );
+
+    return result;
   }
 
   @Get('/profile')
@@ -218,9 +262,7 @@ export class UsersController {
   @Get(':id')
   @HttpCode(200)
   async findOne(@Param('id') id: string) {
-    // this.logger.log(`User id:${id} fetched`, 'UsersService');
     try {
-      console.dir(id, { depth: null });
       const result = await firstValueFrom(
         this.userClient.send({ cmd: 'usersGetDetail' }, id).pipe(
           timeout(5000),
