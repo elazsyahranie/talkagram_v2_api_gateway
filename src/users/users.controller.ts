@@ -179,7 +179,7 @@ export class UsersController {
         });
     }
 
-    return result;
+    return { name: result.name, email: result.email };
   }
 
   @Get('/profile')
