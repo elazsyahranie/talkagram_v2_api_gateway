@@ -21,6 +21,7 @@ import { StaffsModule } from './staffs/staffs.module';
 import { StoresController } from './stores/stores.controller';
 import { StoresService } from './stores/stores.service';
 import { ChatModule } from './chat/chat.module';
+import { HttpModule } from '@nestjs/axios';
 // import { ClientsModule, Transport } from '@nestjs/microservices';
 
 @Module({
@@ -39,6 +40,7 @@ import { ChatModule } from './chat/chat.module';
     // ]),
     UsersModule,
     DatabaseModule,
+    HttpModule,
     EmployeesModule,
     CommonModule,
     ChatModule,

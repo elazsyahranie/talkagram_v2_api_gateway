@@ -34,17 +34,14 @@ import {
 // import { extname } from 'path';
 import { multerImageConfig } from 'src/file-upload.util';
 import { Public } from 'src/decorators/public.decorator';
+import { CurrentUser } from 'src/decorators/currentUser.decorator';
 import { IsSuperAdminGuard } from 'src/auth/issuperadmin.guard';
 // import { UpdateUserDto } from './dto/update-user.dto';
 import { ClientProxy } from '@nestjs/microservices';
-import {
-  firstValueFrom,
-  timeout,
-  catchError,
-  // throwError
-} from 'rxjs';
+import { firstValueFrom, timeout, catchError, throwError, take } from 'rxjs';
 import {
   MEDIA_SERVICE_HTTP_URL,
+  MEDIA_SERVICE_UNAVAILABE_OR_CRASHED,
   USERS_SERVICE_UNAVAILABE_OR_CRASHED,
 } from 'src/common/constants';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -52,15 +49,19 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import axios from 'axios';
 import FormData from 'form-data';
 import * as dotenv from 'dotenv';
+import { HttpService } from '@nestjs/axios';
 dotenv.config();
 // import http from 'http';
+
 @Controller('users')
 export class UsersController {
   constructor(
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: Logger,
+    private readonly httpService: HttpService,
     // private readonly usersService: UsersService,
     @Inject('USERS_SERVICE') private readonly userClient: ClientProxy,
+    @Inject('MEDIA_SERVICE') private readonly mediaClient: ClientProxy,
   ) {}
   // private readonly logger = new MyLoggerService(UsersController.name);
 
@@ -131,15 +132,18 @@ export class UsersController {
       this.userClient.send({ cmd: 'usersRegister' }, userData).pipe(
         timeout(5000),
         catchError((error) => {
-          throw new HttpException(
-            error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
-            error.code || HttpStatus.SERVICE_UNAVAILABLE,
+          return throwError(
+            () =>
+              new HttpException(
+                error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+                error.code || HttpStatus.SERVICE_UNAVAILABLE,
+              ),
           );
         }),
       ),
     );
 
-    if (files) {
+    if (Object.keys(files).length) {
       const formData = new FormData();
 
       if (files.profile)
@@ -155,20 +159,34 @@ export class UsersController {
           files.header[0].originalname,
         );
 
-      await axios
-        .post(
-          `${MEDIA_SERVICE_HTTP_URL}/user-images/${result.user_id}`,
-          formData,
-          {
-            headers: formData.getHeaders(),
-          },
-        )
-        .catch((error) => {
-          throw new HttpException(
-            error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
-            error.code || HttpStatus.SERVICE_UNAVAILABLE,
-          );
-        });
+      /* 
+        Masih belum dapat ditampilkan kalau error karena ECONNREFUSED. 
+        Tapi kalau perlu error ECONNREFUSED atau error serupa dimasukan
+        ke dalam log ketimbang di return ke frontend/client, apalagi di 
+        environment production
+      */
+      await firstValueFrom(
+        this.httpService
+          .post(
+            `${MEDIA_SERVICE_HTTP_URL}/user-images/${result.user_id}`,
+            formData,
+            {
+              headers: formData.getHeaders(),
+            },
+          )
+          .pipe(
+            timeout(5000),
+            catchError((error) => {
+              return throwError(
+                () =>
+                  new HttpException(
+                    error.message || MEDIA_SERVICE_UNAVAILABE_OR_CRASHED,
+                    error.code || HttpStatus.SERVICE_UNAVAILABLE,
+                  ),
+              );
+            }),
+          ),
+      );
     }
 
     return { name: result.name, email: result.email };
@@ -176,8 +194,15 @@ export class UsersController {
 
   @Get('/profile')
   @HttpCode(200)
-  async getProfile(@Req() req: any) {
-    const { id } = req.user;
+  async getProfile(
+    @CurrentUser()
+    user: {
+      id: string;
+      // email: string
+    },
+    // @Req() req: any,
+  ) {
+    const { id } = user;
 
     const result = await firstValueFrom(
       this.userClient.send({ cmd: 'usersGetProfile' }, id).pipe(
@@ -259,23 +284,20 @@ export class UsersController {
     return result;
   }
 
-  // Sending a competely blank form-data would throw error message
-  // This could be handled by either frontend (not sending the data to API if the form is completely blank)
-  // Or by backend (make a condition to not process the request any further if the request being sent is blank)
+  /* 
+    Sending a competely blank form-data would throw error message
+    This could be handled by either frontend (not sending the data to API if the form is completely blank)
+    Or by backend (make a condition to not process the request any further if the request being sent is blank) 
+  */
   @Patch()
   @HttpCode(200)
-  // @UseInterceptors(
-  //   AnyFilesInterceptor(),
-  //   FileInterceptor('profile', multerImageConfig('images', 'image')),
-  //   FileInterceptor('header', multerImageConfig('images', 'image')),
-  // )
   @UseInterceptors(
     FileFieldsInterceptor(
       [
         { name: 'profile', maxCount: 1 },
         { name: 'header', maxCount: 1 },
       ],
-      multerImageConfig('images', 'image'),
+      // multerImageConfig('images', 'image'),
     ),
   )
   async update(
@@ -286,55 +308,20 @@ export class UsersController {
       profile?: Express.Multer.File[];
       header?: Express.Multer.File[];
     },
-    @Req() req: any,
+    @CurrentUser()
+    user: {
+      id: string;
+    },
   ) {
-    const { id } = req.user;
-    // return this.usersService.update(
-    //   id,
-    //   updatedUser,
-    //   files?.profile?.[0],
-    //   files?.header?.[0],
-    // );
-    try {
-      // console.dir(updatedUser, { depth: null });
-      const result = await firstValueFrom(
-        this.userClient.send({ cmd: 'usersUpdate' }, { id, updatedUser }).pipe(
-          timeout(5000),
-          catchError((error) => {
-            throw new HttpException(
-              error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
-              error.code || HttpStatus.SERVICE_UNAVAILABLE,
-            );
-          }),
-        ),
-      );
-
-      return result;
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      throw new HttpException(
-        USERS_SERVICE_UNAVAILABE_OR_CRASHED,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  // For admins only
-  @Delete('/:id')
-  @HttpCode(200)
-  @UseGuards(IsSuperAdminGuard)
-  async deleteById(@Param('id') id: string, @Req() req: any) {
-    // return this.usersService.delete(id);
-    try {
-      const admin_id = req.user.id;
-      // console.dir(id, { depth: null });
-      const result = await firstValueFrom(
+    const user_id = user.id;
+    if (updatedUser) {
+      await firstValueFrom(
         this.userClient
-          .send({ cmd: 'usersDeleteForAdmin' }, { id, admin_id })
+          .send({ cmd: 'usersUpdate' }, { id: user_id, updatedUser })
           .pipe(
             timeout(5000),
+            // take(1),
+            // timeout({ first: 5000 }),
             catchError((error) => {
               throw new HttpException(
                 error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
@@ -343,17 +330,113 @@ export class UsersController {
             }),
           ),
       );
-
-      return result;
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      throw new HttpException(
-        USERS_SERVICE_UNAVAILABE_OR_CRASHED,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
     }
+    if (Object.keys(files).length) {
+      const formData = new FormData();
+
+      if (files.profile)
+        formData.append(
+          'profile',
+          files.profile[0].buffer,
+          files.profile[0].originalname,
+        );
+      if (files.header)
+        formData.append(
+          'header',
+          files.header[0].buffer,
+          files.header[0].originalname,
+        );
+
+      await firstValueFrom(
+        this.httpService
+          .patch(`${MEDIA_SERVICE_HTTP_URL}/user-images/${user_id}`, formData, {
+            headers: formData.getHeaders(),
+          })
+          .pipe(
+            timeout(5000),
+            catchError((error) => {
+              return throwError(
+                () =>
+                  new HttpException(
+                    error.message || MEDIA_SERVICE_UNAVAILABE_OR_CRASHED,
+                    error.code || HttpStatus.SERVICE_UNAVAILABLE,
+                  ),
+              );
+            }),
+          ),
+      );
+      // await axios
+      //   .patch(`${MEDIA_SERVICE_HTTP_URL}/user-images/${user_id}`, formData, {
+      //     headers: formData.getHeaders(),
+      //   })
+      //   .catch((error) => {
+      //     console.dir('Error');
+      //     throw new HttpException(
+      //       error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+      //       error.code || HttpStatus.SERVICE_UNAVAILABLE,
+      //     );
+      //   });
+    }
+
+    return { status: 'success' };
+  }
+
+  // For admins only
+  @Delete('/:id')
+  @HttpCode(200)
+  @UseGuards(IsSuperAdminGuard)
+  async deleteById(
+    @Param('id') id: string,
+    @CurrentUser()
+    user: {
+      id: string;
+      // email: string
+    },
+    // @Req() req: any
+  ) {
+    // return this.usersService.delete(id);
+    // try {
+    const admin_id = user.id;
+    // console.dir(id, { depth: null });
+    const result = await firstValueFrom(
+      this.userClient
+        .send({ cmd: 'usersDeleteForAdmin' }, { id, admin_id })
+        .pipe(
+          timeout(5000),
+          catchError((error) => {
+            throw new HttpException(
+              error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+              error.code || HttpStatus.SERVICE_UNAVAILABLE,
+            );
+          }),
+        ),
+    );
+
+    await firstValueFrom(
+      this.mediaClient.send({ cmd: 'usersRegister' }, id).pipe(
+        timeout(5000),
+        catchError((error) => {
+          return throwError(
+            () =>
+              new HttpException(
+                error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+                error.code || HttpStatus.SERVICE_UNAVAILABLE,
+              ),
+          );
+        }),
+      ),
+    );
+
+    return result;
+    // } catch (error) {
+    //   if (error instanceof HttpException) {
+    //     throw error;
+    //   }
+    //   throw new HttpException(
+    //     USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+    //     HttpStatus.INTERNAL_SERVER_ERROR,
+    //   );
+    // }
   }
 
   @Delete()

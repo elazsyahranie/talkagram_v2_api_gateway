@@ -31,7 +31,7 @@ export class ExceptionsFilter extends BaseExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     // Use this to find out the exact error (in some cases the error message is incomplete)
-    console.dir(exception, { depth: null });
+    // console.dir(exception, { depth: null });
 
     const myResponseObj: MyResponseObj = {
       statusCode: 500,
