@@ -365,17 +365,6 @@ export class UsersController {
             }),
           ),
       );
-      // await axios
-      //   .patch(`${MEDIA_SERVICE_HTTP_URL}/user-images/${user_id}`, formData, {
-      //     headers: formData.getHeaders(),
-      //   })
-      //   .catch((error) => {
-      //     console.dir('Error');
-      //     throw new HttpException(
-      //       error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
-      //       error.code || HttpStatus.SERVICE_UNAVAILABLE,
-      //     );
-      //   });
     }
 
     return { status: 'success' };
@@ -397,8 +386,7 @@ export class UsersController {
     // return this.usersService.delete(id);
     // try {
     const admin_id = user.id;
-    // console.dir(id, { depth: null });
-    const result = await firstValueFrom(
+    await firstValueFrom(
       this.userClient
         .send({ cmd: 'usersDeleteForAdmin' }, { id, admin_id })
         .pipe(
@@ -413,9 +401,10 @@ export class UsersController {
     );
 
     await firstValueFrom(
-      this.mediaClient.send({ cmd: 'usersRegister' }, id).pipe(
+      this.mediaClient.send({ cmd: 'userImageDelete' }, id).pipe(
         timeout(5000),
         catchError((error) => {
+          console.dir(error, { depth: null });
           return throwError(
             () =>
               new HttpException(
@@ -427,7 +416,8 @@ export class UsersController {
       ),
     );
 
-    return result;
+    // return result;
+    return { status: 'success' };
     // } catch (error) {
     //   if (error instanceof HttpException) {
     //     throw error;
@@ -441,32 +431,57 @@ export class UsersController {
 
   @Delete()
   @HttpCode(200)
-  async delete(@Req() req: any) {
+  async delete(
+    // @Req() req: any
+    @CurrentUser()
+    user: {
+      id: string;
+      // email: string
+    },
+  ) {
     // return this.usersService.delete(id);
-    try {
-      const { id } = req.user;
-      // console.dir(id, { depth: null });
-      const result = await firstValueFrom(
-        this.userClient.send({ cmd: 'usersDelete' }, id).pipe(
-          timeout(5000),
-          catchError((error) => {
-            throw new HttpException(
-              error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
-              error.code || HttpStatus.SERVICE_UNAVAILABLE,
-            );
-          }),
-        ),
-      );
+    // try {
+    const { id } = user;
+    // console.dir(id, { depth: null });
+    // const result =
+    await firstValueFrom(
+      this.userClient.send({ cmd: 'usersDelete' }, id).pipe(
+        timeout(5000),
+        catchError((error) => {
+          throw new HttpException(
+            error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+            error.code || HttpStatus.SERVICE_UNAVAILABLE,
+          );
+        }),
+      ),
+    );
 
-      return result;
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      throw new HttpException(
-        USERS_SERVICE_UNAVAILABE_OR_CRASHED,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+    await firstValueFrom(
+      this.mediaClient.send({ cmd: 'userImageDelete' }, id).pipe(
+        timeout(5000),
+        catchError((error) => {
+          console.dir(error, { depth: null });
+          return throwError(
+            () =>
+              new HttpException(
+                error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+                error.code || HttpStatus.SERVICE_UNAVAILABLE,
+              ),
+          );
+        }),
+      ),
+    );
+
+    return { status: 'success' };
+    // return result;
+    // } catch (error) {
+    //   if (error instanceof HttpException) {
+    //     throw error;
+    //   }
+    //   throw new HttpException(
+    //     USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+    //     HttpStatus.INTERNAL_SERVER_ERROR,
+    //   );
+    // }
   }
 }
