@@ -216,7 +216,27 @@ export class UsersController {
       ),
     );
 
-    this.logger.log(`Profile ${id} fetched`, 'UsersService');
+    if (result) {
+      if (result.data) {
+        const userImages = await firstValueFrom(
+          this.mediaClient
+            .send({ cmd: 'userImagesGetByIds' }, { user_ids: [id] })
+            .pipe(
+              timeout(5000),
+              catchError((error) => {
+                throw new HttpException(
+                  error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+                  error.code || HttpStatus.SERVICE_UNAVAILABLE,
+                );
+              }),
+            ),
+        );
+
+        this.logger.log(`Profile ${id} fetched`, 'UsersService');
+
+        return { ...result, data: { ...result.data, user_images: userImages } };
+      }
+    }
 
     return result;
   }
@@ -237,32 +257,68 @@ export class UsersController {
     @Query('keywords') keywords?: string,
     @Query('role') role?: 'Admin' | 'User',
   ) {
-    try {
-      const result = await firstValueFrom(
-        this.userClient
-          .send({ cmd: 'usersGetAll' }, { page, limit, order, keywords, role })
-          .pipe(
-            timeout(5000),
-            catchError((error) => {
-              throw new HttpException(
-                error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
-                error.code || HttpStatus.SERVICE_UNAVAILABLE,
-              );
-            }),
-          ),
-      );
+    // try {
+    const result = await firstValueFrom(
+      this.userClient
+        .send({ cmd: 'usersGetAll' }, { page, limit, order, keywords, role })
+        .pipe(
+          timeout(5000),
+          catchError((error) => {
+            throw new HttpException(
+              error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+              error.code || HttpStatus.SERVICE_UNAVAILABLE,
+            );
+          }),
+        ),
+    );
 
-      return result;
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
+    /* 
+      Untuk berikutnya: 
+      1) Masukan api-gateway dan semua services ke satu repository Git (monorepo)
+      2) Buatkan type atau DTO untuk result dari `getUsers`
+    */
+    if (result) {
+      if (result.data.length) {
+        const user_ids = result.data.map((obj: any) => {
+          return obj.id;
+        });
+
+        const userImages = await firstValueFrom(
+          this.mediaClient
+            .send({ cmd: 'userImagesGetByIds' }, { user_ids })
+            .pipe(
+              timeout(5000),
+              catchError((error) => {
+                throw new HttpException(
+                  error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+                  error.code || HttpStatus.SERVICE_UNAVAILABLE,
+                );
+              }),
+            ),
+        );
+
+        const finalResult = result.data.map((obj: any) => {
+          const findImages = userImages.filter(
+            (usrImg: any) => usrImg.user_id === obj.id,
+          );
+
+          return { ...obj, user_images: findImages };
+        });
+
+        this.logger.log(`Users fetched`, 'UsersService');
+
+        return { ...result, data: finalResult };
       }
-      throw new HttpException(
-        USERS_SERVICE_UNAVAILABE_OR_CRASHED,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
     }
-    // return this.usersService.findAll(page, limit, order, keywords, role);
+    // } catch (error) {
+    //   if (error instanceof HttpException) {
+    //     throw error;
+    //   }
+    //   throw new HttpException(
+    //     USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+    //     HttpStatus.INTERNAL_SERVER_ERROR,
+    //   );
+    // }
   }
 
   // ParseIntPipe
@@ -281,7 +337,32 @@ export class UsersController {
       ),
     );
 
-    return result;
+    /* 
+      Untuk berikutnya: 
+      1) Masukan api-gateway dan semua services ke satu repository Git (monorepo)
+      2) Buatkan type atau DTO untuk result dari `getUsers`
+    */
+    if (result) {
+      if (result.data) {
+        const userImages = await firstValueFrom(
+          this.mediaClient
+            .send({ cmd: 'userImagesGetByIds' }, { user_ids: [id] })
+            .pipe(
+              timeout(5000),
+              catchError((error) => {
+                throw new HttpException(
+                  error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+                  error.code || HttpStatus.SERVICE_UNAVAILABLE,
+                );
+              }),
+            ),
+        );
+
+        this.logger.log(`User ${id} fetched`, 'UsersService');
+
+        return { ...result, data: { ...result.data, user_images: userImages } };
+      }
+    }
   }
 
   /* 
@@ -314,6 +395,7 @@ export class UsersController {
     },
   ) {
     const user_id = user.id;
+    // const user_id = '0bdbac9a-8dee-4e1b-971d-3ba0bbcb30ba';
     if (updatedUser) {
       await firstValueFrom(
         this.userClient
