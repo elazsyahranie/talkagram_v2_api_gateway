@@ -9,8 +9,8 @@ import { BaseExceptionFilter } from '@nestjs/core';
 import { Request, Response } from 'express';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
-import { PrismaClientValidationError } from '@prisma/client/runtime/library';
-import { ZodError } from 'zod';
+// import { PrismaClientValidationError } from '@prisma/client/runtime/library';
+// import { ZodError } from 'zod';
 
 type MyResponseObj = {
   statusCode: number;
@@ -31,7 +31,7 @@ export class ExceptionsFilter extends BaseExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     // Use this to find out the exact error (in some cases the error message is incomplete)
-    // console.dir(exception, { depth: null });
+    console.dir(exception, { depth: null });
 
     const myResponseObj: MyResponseObj = {
       statusCode: 500,
