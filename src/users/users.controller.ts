@@ -46,13 +46,15 @@ import {
 } from 'src/common/constants';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import axios from 'axios';
+// import axios from 'axios';
 import FormData from 'form-data';
 import * as dotenv from 'dotenv';
 import { HttpService } from '@nestjs/axios';
 import {
   GetUserResult,
+  // GetUserResult,
   GetUsersResult,
+  UserData,
   UserImagesResult,
 } from './dto/get-users-result.dto';
 dotenv.config();
@@ -208,8 +210,9 @@ export class UsersController {
     // @Req() req: any,
   ) {
     const { id } = user;
+    // const id = '0bdbac9a-8dee-4e1b-971d-3ba0bbcb30ba';
 
-    const result = await firstValueFrom(
+    const result: GetUserResult = await firstValueFrom(
       this.userClient.send({ cmd: 'usersGetProfile' }, id).pipe(
         timeout(5000),
         catchError((error) => {
@@ -221,27 +224,27 @@ export class UsersController {
       ),
     );
 
-    if (result) {
-      if (result.data) {
-        const userImages = await firstValueFrom(
-          this.mediaClient
-            .send({ cmd: 'userImagesGetByIds' }, { user_ids: [id] })
-            .pipe(
-              timeout(5000),
-              catchError((error) => {
-                throw new HttpException(
-                  error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
-                  error.code || HttpStatus.SERVICE_UNAVAILABLE,
-                );
-              }),
-            ),
-        );
+    // if (result) {
+    if (result.data) {
+      const userImages: UserImagesResult[] = await firstValueFrom(
+        this.mediaClient
+          .send({ cmd: 'userImagesGetByIds' }, { user_ids: [id] })
+          .pipe(
+            timeout(5000),
+            catchError((error) => {
+              throw new HttpException(
+                error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+                error.code || HttpStatus.SERVICE_UNAVAILABLE,
+              );
+            }),
+          ),
+      );
 
-        this.logger.log(`Profile ${id} fetched`, 'UsersService');
+      this.logger.log(`Profile ${id} fetched`, 'UsersService');
 
-        return { ...result, data: { ...result.data, user_images: userImages } };
-      }
+      return { ...result, data: { ...result.data, user_images: userImages } };
     }
+    // }
 
     return result;
   }
@@ -285,11 +288,11 @@ export class UsersController {
     */
     // if (result) {
     if (result.data.length) {
-      const user_ids = result.data.map((obj: GetUserResult) => {
+      const user_ids = result.data.map((obj: UserData) => {
         return obj.id;
       });
 
-      const userImages = await firstValueFrom(
+      const userImages: UserImagesResult[] = await firstValueFrom(
         this.mediaClient.send({ cmd: 'userImagesGetByIds' }, { user_ids }).pipe(
           timeout(5000),
           catchError((error) => {
@@ -301,7 +304,7 @@ export class UsersController {
         ),
       );
 
-      const finalResult = result.data.map((obj: GetUserResult) => {
+      const finalResult = result.data.map((obj: UserData) => {
         const findImages = userImages.filter(
           (usrImg: UserImagesResult) => usrImg.user_id === obj.id,
         );
@@ -331,7 +334,7 @@ export class UsersController {
   @Get(':id')
   @HttpCode(200)
   async findOne(@Param('id') id: string) {
-    const result = await firstValueFrom(
+    const result: GetUserResult = await firstValueFrom(
       this.userClient.send({ cmd: 'usersGetDetail' }, id).pipe(
         timeout(5000),
         catchError((error) => {
@@ -348,27 +351,27 @@ export class UsersController {
       1) Masukan api-gateway dan semua services ke satu repository Git (monorepo)
       2) Buatkan type atau DTO untuk result dari `getUsers`
     */
-    if (result) {
-      if (result.data) {
-        const userImages = await firstValueFrom(
-          this.mediaClient
-            .send({ cmd: 'userImagesGetByIds' }, { user_ids: [id] })
-            .pipe(
-              timeout(5000),
-              catchError((error) => {
-                throw new HttpException(
-                  error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
-                  error.code || HttpStatus.SERVICE_UNAVAILABLE,
-                );
-              }),
-            ),
-        );
+    // if (result) {
+    if (result.data) {
+      const userImages: UserImagesResult[] = await firstValueFrom(
+        this.mediaClient
+          .send({ cmd: 'userImagesGetByIds' }, { user_ids: [id] })
+          .pipe(
+            timeout(5000),
+            catchError((error) => {
+              throw new HttpException(
+                error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+                error.code || HttpStatus.SERVICE_UNAVAILABLE,
+              );
+            }),
+          ),
+      );
 
-        this.logger.log(`User ${id} fetched`, 'UsersService');
+      this.logger.log(`User ${id} fetched`, 'UsersService');
 
-        return { ...result, data: { ...result.data, user_images: userImages } };
-      }
+      return { ...result, data: { ...result.data, user_images: userImages } };
     }
+    // }
   }
 
   /* 

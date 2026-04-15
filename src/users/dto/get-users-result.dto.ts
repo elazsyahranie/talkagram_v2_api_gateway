@@ -1,13 +1,17 @@
 // import { IsNotEmpty, IsString } from 'class-validator';
 
+export class GetUserResult {
+  data: UserData;
+}
+
 export class GetUsersResult {
   totalData: number;
   totalPage: number;
   page: number;
-  data: GetUserResult[];
+  data: UserData[];
 }
 
-export class GetUserResult {
+export class UserData {
   id: string;
   first_name: string | null;
   middle_name: string | null;
