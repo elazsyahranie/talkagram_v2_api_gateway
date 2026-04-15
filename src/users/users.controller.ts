@@ -210,7 +210,6 @@ export class UsersController {
     // @Req() req: any,
   ) {
     const { id } = user;
-    // const id = '0bdbac9a-8dee-4e1b-971d-3ba0bbcb30ba';
 
     const result: GetUserResult = await firstValueFrom(
       this.userClient.send({ cmd: 'usersGetProfile' }, id).pipe(
