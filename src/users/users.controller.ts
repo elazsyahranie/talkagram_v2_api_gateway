@@ -50,6 +50,11 @@ import axios from 'axios';
 import FormData from 'form-data';
 import * as dotenv from 'dotenv';
 import { HttpService } from '@nestjs/axios';
+import {
+  GetUserResult,
+  GetUsersResult,
+  UserImagesResult,
+} from './dto/get-users-result.dto';
 dotenv.config();
 // import http from 'http';
 
@@ -258,10 +263,34 @@ export class UsersController {
     @Query('role') role?: 'Admin' | 'User',
   ) {
     // try {
-    const result = await firstValueFrom(
+    const result: GetUsersResult = await firstValueFrom(
       this.userClient
         .send({ cmd: 'usersGetAll' }, { page, limit, order, keywords, role })
-        .pipe(
+        .pipe(timeout(5000)),
+    )
+      .then((result) => {
+        return result;
+      })
+      .catch((error) => {
+        throw new HttpException(
+          error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
+          error.code || HttpStatus.SERVICE_UNAVAILABLE,
+        );
+      });
+
+    /* 
+      Untuk berikutnya: 
+      1) Masukan api-gateway dan semua services ke satu repository Git (monorepo)
+      2) Buatkan type atau DTO untuk result dari `getUsers`
+    */
+    // if (result) {
+    if (result.data.length) {
+      const user_ids = result.data.map((obj: GetUserResult) => {
+        return obj.id;
+      });
+
+      const userImages = await firstValueFrom(
+        this.mediaClient.send({ cmd: 'userImagesGetByIds' }, { user_ids }).pipe(
           timeout(5000),
           catchError((error) => {
             throw new HttpException(
@@ -270,46 +299,23 @@ export class UsersController {
             );
           }),
         ),
-    );
+      );
 
-    /* 
-      Untuk berikutnya: 
-      1) Masukan api-gateway dan semua services ke satu repository Git (monorepo)
-      2) Buatkan type atau DTO untuk result dari `getUsers`
-    */
-    if (result) {
-      if (result.data.length) {
-        const user_ids = result.data.map((obj: any) => {
-          return obj.id;
-        });
-
-        const userImages = await firstValueFrom(
-          this.mediaClient
-            .send({ cmd: 'userImagesGetByIds' }, { user_ids })
-            .pipe(
-              timeout(5000),
-              catchError((error) => {
-                throw new HttpException(
-                  error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
-                  error.code || HttpStatus.SERVICE_UNAVAILABLE,
-                );
-              }),
-            ),
+      const finalResult = result.data.map((obj: GetUserResult) => {
+        const findImages = userImages.filter(
+          (usrImg: UserImagesResult) => usrImg.user_id === obj.id,
         );
 
-        const finalResult = result.data.map((obj: any) => {
-          const findImages = userImages.filter(
-            (usrImg: any) => usrImg.user_id === obj.id,
-          );
+        return { ...obj, user_images: findImages };
+      });
 
-          return { ...obj, user_images: findImages };
-        });
+      this.logger.log(`Users fetched`, 'UsersService');
 
-        this.logger.log(`Users fetched`, 'UsersService');
-
-        return { ...result, data: finalResult };
-      }
+      return { ...result, data: finalResult };
     }
+    // }
+    // return result;
+
     // } catch (error) {
     //   if (error instanceof HttpException) {
     //     throw error;
