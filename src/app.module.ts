@@ -23,6 +23,7 @@ import { StoresService } from './stores/stores.service';
 import { ChatModule } from './chat/chat.module';
 import { HttpModule } from '@nestjs/axios';
 // import { ClientsModule, Transport } from '@nestjs/microservices';
+import { ChatsModule } from './chats/chats.module';
 
 @Module({
   imports: [
@@ -59,6 +60,7 @@ import { HttpModule } from '@nestjs/axios';
     CompaniesModule,
     RedisModule,
     StaffsModule,
+    ChatsModule,
   ],
   controllers: [AppController, StoresController],
   providers: [
