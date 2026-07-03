@@ -2,6 +2,7 @@ import {
   Controller,
   Inject,
   Post,
+  Get,
   HttpCode,
   Body,
   HttpException,
@@ -21,6 +22,7 @@ import { CreateGrupDto } from './dto/create-group.dto';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom, timeout, catchError, throwError, take } from 'rxjs';
 import { CurrentUser } from 'src/decorators/currentUser.decorator';
+import { GetRoomsData } from './dto/get-rooms-result.dto';
 
 @Controller('chats')
 export class ChatsController {
@@ -57,6 +59,34 @@ export class ChatsController {
             );
           }),
         ),
+    );
+
+    // return request;
+    return result;
+  }
+
+  @Get('/rooms/user')
+  @HttpCode(200)
+  // @Public()
+  async getRooms(
+    @CurrentUser()
+    user: {
+      id: string;
+      // email: string
+    },
+  ) {
+    const { id } = user;
+
+    const result: GetRoomsData = await firstValueFrom(
+      this.chatsClient.send({ cmd: 'chatsGetRoomsByUser' }, id).pipe(
+        timeout(5000),
+        catchError((error) => {
+          throw new HttpException(
+            error.message || CHATS_SERVICE_UNAVAILABLE_OR_CRASHED,
+            error.code || HttpStatus.SERVICE_UNAVAILABLE,
+          );
+        }),
+      ),
     );
 
     // return request;
