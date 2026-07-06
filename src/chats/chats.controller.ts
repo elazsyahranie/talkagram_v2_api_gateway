@@ -7,6 +7,9 @@ import {
   Body,
   HttpException,
   HttpStatus,
+  Query,
+  DefaultValuePipe,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { Public } from 'src/decorators/public.decorator';
 import {
@@ -22,7 +25,7 @@ import { CreateGrupDto } from './dto/create-group.dto';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom, timeout, catchError, throwError, take } from 'rxjs';
 import { CurrentUser } from 'src/decorators/currentUser.decorator';
-import { GetRoomsData } from './dto/get-rooms-result.dto';
+import { GetRoomsResult } from './dto/get-rooms-result.dto';
 
 @Controller('chats')
 export class ChatsController {
@@ -74,19 +77,24 @@ export class ChatsController {
       id: string;
       // email: string
     },
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Query('order', new DefaultValuePipe('latest')) order: string,
   ) {
     const { id } = user;
 
-    const result: GetRoomsData = await firstValueFrom(
-      this.chatsClient.send({ cmd: 'chatsGetRoomsByUser' }, id).pipe(
-        timeout(5000),
-        catchError((error) => {
-          throw new HttpException(
-            error.message || CHATS_SERVICE_UNAVAILABLE_OR_CRASHED,
-            error.code || HttpStatus.SERVICE_UNAVAILABLE,
-          );
-        }),
-      ),
+    const result: GetRoomsResult = await firstValueFrom(
+      this.chatsClient
+        .send({ cmd: 'chatsGetRoomsByUser' }, { user, order, page, limit })
+        .pipe(
+          timeout(5000),
+          catchError((error) => {
+            throw new HttpException(
+              error.message || CHATS_SERVICE_UNAVAILABLE_OR_CRASHED,
+              error.code || HttpStatus.SERVICE_UNAVAILABLE,
+            );
+          }),
+        ),
     );
 
     // return request;
