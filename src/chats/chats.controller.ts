@@ -82,10 +82,9 @@ export class ChatsController {
     @Query('order', new DefaultValuePipe('latest')) order: string,
   ) {
     const { id } = user;
-
     const result: GetRoomsResult = await firstValueFrom(
       this.chatsClient
-        .send({ cmd: 'chatsGetRoomsByUser' }, { user, order, page, limit })
+        .send({ cmd: 'chatsGetRoomsByUser' }, { user: id, order, page, limit })
         .pipe(
           timeout(5000),
           catchError((error) => {
