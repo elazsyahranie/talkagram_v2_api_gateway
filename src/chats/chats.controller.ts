@@ -127,8 +127,22 @@ export class ChatsController {
       id: string;
     },
   ) {
-    const user_id = user.id;
+    const { id } = user;
 
-    return { status: 'success', user_id, data: updatedGroup };
+    const result = await firstValueFrom(
+      this.chatsClient
+        .send({ cmd: 'chatsUpdateGroup' }, { admin: id, ...updatedGroup })
+        .pipe(
+          timeout(5000),
+          catchError((error) => {
+            throw new HttpException(
+              error.message || CHATS_SERVICE_UNAVAILABLE_OR_CRASHED,
+              error.code || HttpStatus.SERVICE_UNAVAILABLE,
+            );
+          }),
+        ),
+    );
+
+    return result;
   }
 }
