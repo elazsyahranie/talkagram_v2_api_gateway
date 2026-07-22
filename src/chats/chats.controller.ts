@@ -3,14 +3,22 @@ import {
   Inject,
   Post,
   Get,
+  Patch,
   HttpCode,
   Body,
   HttpException,
+  ValidationPipe,
   HttpStatus,
   Query,
   DefaultValuePipe,
   ParseIntPipe,
+  UseInterceptors,
 } from '@nestjs/common';
+import {
+  // AnyFilesInterceptor,
+  FileFieldsInterceptor,
+  // FileInterceptor,
+} from '@nestjs/platform-express';
 import { Public } from 'src/decorators/public.decorator';
 import {
   CHATS_SERVICE_UNAVAILABLE_OR_CRASHED,
@@ -21,11 +29,12 @@ import {
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import { HttpService } from '@nestjs/axios';
-import { CreateGrupDto } from './dto/create-group.dto';
+import { CreateGroupDto } from './dto/create-group.dto';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom, timeout, catchError, throwError, take } from 'rxjs';
 import { CurrentUser } from 'src/decorators/currentUser.decorator';
 import { GetRoomsResult } from './dto/get-rooms-result.dto';
+import { UpdateGroupDto } from './dto/update-group.dto';
 
 @Controller('chats')
 export class ChatsController {
@@ -46,7 +55,7 @@ export class ChatsController {
       id: string;
       // email: string
     },
-    @Body() request: CreateGrupDto,
+    @Body() request: CreateGroupDto,
   ) {
     const { id } = user;
 
@@ -98,5 +107,28 @@ export class ChatsController {
 
     // return request;
     return result;
+  }
+
+  @Patch('/rooms')
+  @HttpCode(200)
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: 'profile', maxCount: 1 },
+        { name: 'header', maxCount: 1 },
+      ],
+      // multerImageConfig('images', 'image'),
+    ),
+  )
+  async updateGroup(
+    @Body(new ValidationPipe({ whitelist: true })) updatedGroup: UpdateGroupDto,
+    @CurrentUser()
+    user: {
+      id: string;
+    },
+  ) {
+    const user_id = user.id;
+
+    return { status: 'success', user_id, data: updatedGroup };
   }
 }
