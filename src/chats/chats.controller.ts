@@ -6,6 +6,7 @@ import {
   Patch,
   HttpCode,
   Body,
+  Param,
   HttpException,
   ValidationPipe,
   HttpStatus,
@@ -109,7 +110,7 @@ export class ChatsController {
     return result;
   }
 
-  @Patch('/rooms')
+  @Patch('/rooms/:id')
   @HttpCode(200)
   @UseInterceptors(
     FileFieldsInterceptor(
@@ -121,17 +122,22 @@ export class ChatsController {
     ),
   )
   async updateGroup(
+    @Param('id') id: string,
     @Body(new ValidationPipe({ whitelist: true })) updatedGroup: UpdateGroupDto,
     @CurrentUser()
     user: {
       id: string;
     },
   ) {
-    const { id } = user;
+    const admin_id = user.id;
+    // const admin_id = '1c7e5dd7-5618-4ff8-82cf-73ca0c3d237a';
 
     const result = await firstValueFrom(
       this.chatsClient
-        .send({ cmd: 'chatsUpdateGroup' }, { admin: id, ...updatedGroup })
+        .send(
+          { cmd: 'chatsUpdateGroup' },
+          { room_id: id, admin: admin_id, ...updatedGroup },
+        )
         .pipe(
           timeout(5000),
           catchError((error) => {
