@@ -128,7 +128,7 @@ export class ChatsController {
       this.chatsClient
         .send(
           { cmd: 'chatsUpdateGroupParticipants' },
-          { room_id: id, admin_id: admin_id, participants: requestBody },
+          { room_id: id, admin: admin_id, participants: requestBody },
         )
         .pipe(
           timeout(5000),
