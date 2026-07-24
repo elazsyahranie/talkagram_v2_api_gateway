@@ -9,7 +9,7 @@ import {
 
 export class AddGroupParticipants {
   @IsString()
-  user_id: string;
+  user: string;
 
   @IsEnum(['Admin', 'User'], {
     message: 'Invalid input!',
