@@ -37,6 +37,7 @@ import { CurrentUser } from 'src/decorators/currentUser.decorator';
 import { GetRoomsResult } from './dto/get-rooms-result.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
 import { AddGroupParticipants } from './dto/add-group-participants.dto';
+import { UpdateGroupParticipants } from './dto/update-group-participants.dto';
 
 @Controller('chats')
 export class ChatsController {
@@ -145,6 +146,38 @@ export class ChatsController {
     );
 
     // return request;
+    return result;
+  }
+
+  @Patch('/rooms/participants/:id')
+  @HttpCode(200)
+  async updateGroupParticipants(
+    @Param('id') id: string,
+    @CurrentUser()
+    user: {
+      id: string;
+    },
+    @Body() updatedParticipants: UpdateGroupParticipants[],
+  ) {
+    const admin_id = user.id;
+
+    const result = await firstValueFrom(
+      this.chatsClient
+        .send(
+          { cmd: 'chatsUpdateGroupParticipants' },
+          { room_id: id, admin: admin_id, participants: updatedParticipants },
+        )
+        .pipe(
+          timeout(5000),
+          catchError((error) => {
+            throw new HttpException(
+              error.message || CHATS_SERVICE_UNAVAILABLE_OR_CRASHED,
+              error.code || HttpStatus.SERVICE_UNAVAILABLE,
+            );
+          }),
+        ),
+    );
+
     return result;
   }
 
