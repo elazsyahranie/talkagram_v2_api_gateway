@@ -15,7 +15,6 @@ import { winstonConfig } from './logger/winston.config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { RedisModule } from './redis.module';
-import { StaffsModule } from './staffs/staffs.module';
 import { StoresController } from './stores/stores.controller';
 import { StoresService } from './stores/stores.service';
 import { HttpModule } from '@nestjs/axios';
@@ -53,7 +52,6 @@ import { ChatsModule } from './chats/chats.module';
     // MyLoggerModule,
     AuthModule,
     RedisModule,
-    StaffsModule,
     ChatsModule,
   ],
   controllers: [AppController, StoresController],
