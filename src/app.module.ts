@@ -9,7 +9,6 @@ import { EmployeesModule } from './employees/employees.module';
 // import { MyLoggerModule } from './my-logger/my-logger.module';
 import { CommonModule } from './common/common.module';
 import { AuthModule } from './auth/auth.module';
-import { CompaniesModule } from './companies/companies.module';
 import { WinstonModule } from 'nest-winston';
 import { winstonConfig } from './logger/winston.config';
 // import { ExceptionsFilter } from './common/exceptions.filter';
@@ -55,7 +54,6 @@ import { ChatsModule } from './chats/chats.module';
     // ]),
     // MyLoggerModule,
     AuthModule,
-    CompaniesModule,
     RedisModule,
     StaffsModule,
     ChatsModule,
