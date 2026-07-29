@@ -15,8 +15,6 @@ import { winstonConfig } from './logger/winston.config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { RedisModule } from './redis.module';
-import { StoresController } from './stores/stores.controller';
-import { StoresService } from './stores/stores.service';
 import { HttpModule } from '@nestjs/axios';
 // import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ChatsModule } from './chats/chats.module';
@@ -54,7 +52,7 @@ import { ChatsModule } from './chats/chats.module';
     RedisModule,
     ChatsModule,
   ],
-  controllers: [AppController, StoresController],
+  controllers: [AppController],
   providers: [
     AppService,
     // { provide: APP_GUARD, useClass: ThrottlerGuard } Activates the throttle
@@ -62,7 +60,6 @@ import { ChatsModule } from './chats/chats.module';
     //   provide: APP_FILTER,
     //   useClass: ExceptionsFilter,
     // },
-    StoresService,
   ],
   exports: [WinstonModule],
 })
