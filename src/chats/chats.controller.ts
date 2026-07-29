@@ -151,6 +151,38 @@ export class ChatsController {
     return result;
   }
 
+  @Patch('/rooms/self/participants/:id')
+  @HttpCode(200)
+  async selfUpdateParticipant(
+    @Param('id') id: string,
+    @CurrentUser()
+    user: {
+      id: string;
+    },
+    @Body() selfUpdatedParticipant: SelfUpdateGroupParticipants,
+  ) {
+    const user_id = user.id;
+
+    const result = await firstValueFrom(
+      this.chatsClient
+        .send(
+          { cmd: 'chatsSelfUpdateGroupParticipant' },
+          { room_id: id, user: user_id, role: selfUpdatedParticipant.role },
+        )
+        .pipe(
+          timeout(5000),
+          catchError((error) => {
+            throw new HttpException(
+              error.message || CHATS_SERVICE_UNAVAILABLE_OR_CRASHED,
+              error.code || HttpStatus.SERVICE_UNAVAILABLE,
+            );
+          }),
+        ),
+    );
+
+    return result;
+  }
+
   @Patch('/rooms/participants/:id')
   @HttpCode(200)
   async updateGroupParticipants(
@@ -168,37 +200,6 @@ export class ChatsController {
         .send(
           { cmd: 'chatsUpdateGroupParticipants' },
           { room_id: id, admin: admin_id, participants: updatedParticipants },
-        )
-        .pipe(
-          timeout(5000),
-          catchError((error) => {
-            throw new HttpException(
-              error.message || CHATS_SERVICE_UNAVAILABLE_OR_CRASHED,
-              error.code || HttpStatus.SERVICE_UNAVAILABLE,
-            );
-          }),
-        ),
-    );
-
-    return { status: 'success' };
-  }
-
-  @Patch('/rooms/participants')
-  @HttpCode(200)
-  async selfUpdateParticipant(
-    @CurrentUser()
-    user: {
-      id: string;
-    },
-    @Body() selfUpdatedParticipant: SelfUpdateGroupParticipants,
-  ) {
-    const user_id = user.id;
-
-    const result = await firstValueFrom(
-      this.chatsClient
-        .send(
-          { cmd: 'chatsSelfUpdateGroupParticipant' },
-          { user: user_id, ...selfUpdatedParticipant },
         )
         .pipe(
           timeout(5000),
