@@ -20,7 +20,6 @@ import { RedisModule } from './redis.module';
 import { StaffsModule } from './staffs/staffs.module';
 import { StoresController } from './stores/stores.controller';
 import { StoresService } from './stores/stores.service';
-import { ChatModule } from './chat/chat.module';
 import { HttpModule } from '@nestjs/axios';
 // import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ChatsModule } from './chats/chats.module';
@@ -44,7 +43,6 @@ import { ChatsModule } from './chats/chats.module';
     HttpModule,
     EmployeesModule,
     CommonModule,
-    ChatModule,
     WinstonModule.forRoot(winstonConfig),
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), 'uploads'),
