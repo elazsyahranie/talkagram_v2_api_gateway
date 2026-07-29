@@ -39,6 +39,7 @@ import { GetRoomsResult } from './dto/get-rooms-result.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
 import { AddGroupParticipants } from './dto/add-group-participants.dto';
 import { UpdateGroupParticipants } from './dto/update-group-participants.dto';
+import { SelfUpdateGroupParticipants } from './dto/self-update-group-participant.dto';
 
 @Controller('chats')
 export class ChatsController {
@@ -189,10 +190,28 @@ export class ChatsController {
     user: {
       id: string;
     },
+    @Body() selfUpdatedParticipant: SelfUpdateGroupParticipants,
   ) {
     const user_id = user.id;
 
-    return { status: 'participant self-update succeeded', user_id };
+    const result = await firstValueFrom(
+      this.chatsClient
+        .send(
+          { cmd: 'chatsSelfUpdateGroupParticipant' },
+          { user: user_id, ...selfUpdatedParticipant },
+        )
+        .pipe(
+          timeout(5000),
+          catchError((error) => {
+            throw new HttpException(
+              error.message || CHATS_SERVICE_UNAVAILABLE_OR_CRASHED,
+              error.code || HttpStatus.SERVICE_UNAVAILABLE,
+            );
+          }),
+        ),
+    );
+
+    return result;
   }
 
   @Patch('/rooms/:id')
