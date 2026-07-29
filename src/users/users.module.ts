@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { UsersController } from './users.controller';
-import { UsersService } from './users.service';
 import { DatabaseModule } from 'src/database/database.module';
 // import { ValidationService } from 'src/common/validation.service';
 import { JwtModule } from '@nestjs/jwt';
@@ -45,6 +44,6 @@ import { HttpModule } from '@nestjs/axios';
     ]),
   ],
   controllers: [UsersController],
-  providers: [UsersService],
+  providers: [],
 })
 export class UsersModule {}
