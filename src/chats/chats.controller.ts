@@ -4,6 +4,7 @@ import {
   Post,
   Get,
   Patch,
+  Delete,
   HttpCode,
   Body,
   Param,
@@ -178,7 +179,20 @@ export class ChatsController {
         ),
     );
 
-    return result;
+    return { status: 'success' };
+  }
+
+  @Patch('/rooms/participants')
+  @HttpCode(200)
+  async selfUpdateParticipant(
+    @CurrentUser()
+    user: {
+      id: string;
+    },
+  ) {
+    const user_id = user.id;
+
+    return { status: 'participant self-update succeeded', user_id };
   }
 
   @Patch('/rooms/:id')
