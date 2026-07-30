@@ -268,11 +268,29 @@ export class ChatsController {
   ) {
     const user_id = user.id;
 
-    return {
-      status: 'success - self delete participant',
-      room_id: id,
-      user: user_id,
-    };
+    const result = await firstValueFrom(
+      this.chatsClient
+        .send(
+          { cmd: 'chatsSelfDeleteGroupParticipant' },
+          { room_id: id, user: user_id },
+        )
+        .pipe(
+          timeout(5000),
+          catchError((error) => {
+            throw new HttpException(
+              error.message || CHATS_SERVICE_UNAVAILABLE_OR_CRASHED,
+              error.code || HttpStatus.SERVICE_UNAVAILABLE,
+            );
+          }),
+        ),
+    );
+
+    return result;
+    // return {
+    //   status: 'success - self delete participant',
+    //   room_id: id,
+    //   user: user_id,
+    // };
   }
 
   @Delete('/rooms/participants/:id')
