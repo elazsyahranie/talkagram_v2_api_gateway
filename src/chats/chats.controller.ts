@@ -256,4 +256,47 @@ export class ChatsController {
 
     return result;
   }
+
+  @Delete('/rooms/participants/:id')
+  @HttpCode(200)
+  async deleteGroupParticipants(
+    @Param('id') id: string,
+    @Body() participants: string[],
+    @CurrentUser()
+    user: {
+      id: string;
+    },
+  ) {
+    const admin_id = user.id;
+
+    const result = await firstValueFrom(
+      this.chatsClient
+        .send(
+          { cmd: 'chatsDeleteGroupParticipants' },
+          {
+            room_id: id,
+            admin: admin_id,
+            participantsForDeletion: participants,
+          },
+        )
+        .pipe(
+          timeout(5000),
+          catchError((error) => {
+            throw new HttpException(
+              error.message || CHATS_SERVICE_UNAVAILABLE_OR_CRASHED,
+              error.code || HttpStatus.SERVICE_UNAVAILABLE,
+            );
+          }),
+        ),
+    );
+
+    return result;
+
+    // return {
+    //   status: 'succeeded - delete room participants',
+    //   room_id: id,
+    //   admin: admin_id,
+    //   participants,
+    // };
+  }
 }
