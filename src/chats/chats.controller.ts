@@ -257,6 +257,24 @@ export class ChatsController {
     return result;
   }
 
+  @Delete('/rooms/self/participant/:id')
+  @HttpCode(200)
+  async selfDeleteGroupParticipant(
+    @Param('id') id: string,
+    @CurrentUser()
+    user: {
+      id: string;
+    },
+  ) {
+    const user_id = user.id;
+
+    return {
+      status: 'success - self delete participant',
+      room_id: id,
+      user: user_id,
+    };
+  }
+
   @Delete('/rooms/participants/:id')
   @HttpCode(200)
   async deleteGroupParticipants(
