@@ -151,7 +151,7 @@ export class ChatsController {
     return result;
   }
 
-  @Patch('/rooms/self/participants/:id')
+  @Patch('/group/self/participants/:id')
   @HttpCode(200)
   async selfUpdateParticipant(
     @Param('id') id: string,
@@ -183,7 +183,7 @@ export class ChatsController {
     return result;
   }
 
-  @Patch('/rooms/participants/:id')
+  @Patch('/group/participants/:id')
   @HttpCode(200)
   async updateGroupParticipants(
     @Param('id') id: string,
@@ -215,7 +215,7 @@ export class ChatsController {
     return result;
   }
 
-  @Patch('/rooms/:id')
+  @Patch('/group/:id')
   @HttpCode(200)
   @UseInterceptors(
     FileFieldsInterceptor(
@@ -257,7 +257,7 @@ export class ChatsController {
     return result;
   }
 
-  @Delete('/rooms/self/participant/:id')
+  @Delete('/group/self/participant/:id')
   @HttpCode(200)
   async selfDeleteGroupParticipant(
     @Param('id') id: string,
@@ -293,7 +293,7 @@ export class ChatsController {
     // };
   }
 
-  @Delete('/rooms/participants/:id')
+  @Delete('/group/participants/:id')
   @HttpCode(200)
   async deleteGroupParticipants(
     @Param('id') id: string,
@@ -334,5 +334,11 @@ export class ChatsController {
     //   admin: admin_id,
     //   participants,
     // };
+  }
+
+  @Delete('/group/:id')
+  @HttpCode(200)
+  async deleteGroup() {
+    return { status: 'delete group succeeded' };
   }
 }
