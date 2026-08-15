@@ -34,16 +34,15 @@ The gateway exposes following HTTP endpoints to clients:
 - **POST** `/users/login` [logging in]
 - **POST** `/users/` [user registration]
 - **GET** `/users/profile` [get profile]<br/>
-  Uses ID from the JWT to fetch individual user data.
+  An endpoint to fetch user data using an ID from the JWT.
 - **GET** `/users` [get users]
 - **GET** `/users/:id` [get users with ID]<br/>
-  Uses ID from the param to fetch individual user data.
+  An endpoint to fetch user data using an ID from the param.
 - **PATCH** `/users/` [update user]
-- **DELETE** `/users/:id` [delete user by id]<br/>
-  Uses ID from the param to delete individual user data. Authorized for admins only.
+- **DELETE** `/users/:id` [delete user by id] `ADMIN ONLY`<br/>
+  An endpoint for the admin to delete an individual user.
 - **DELETE** `/users/` [self delete user]<br/>
-  Uses ID from the JWT to delete individual user data.
-  Fetching an individual user using the ID taken from the token.
+  An endpoint for a user to delete themselves.
 
 ### Chats 
 - **POST** `/chats/rooms/participants/:id` [add group participant]
@@ -57,6 +56,6 @@ The gateway exposes following HTTP endpoints to clients:
 - **PATCH** `/groups/` [update room] `GROUP ADMIN ONLY`
 - **DELETE** `/groups/self/participant/:id` [self delete group participant]<br/>
   An endpoint for group participants to delete themselves from the group.
-- **DELETE** `/groups/participants/:id` [delete group participant]<br/> `GROUP ADMIN ONLY`
+- **DELETE** `/groups/participants/:id` [delete group participant] `GROUP ADMIN ONLY` <br/> 
 - **DELETE** `/groups/:id` [delete group] `GROUP ADMIN ONLY`
   
