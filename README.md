@@ -44,3 +44,19 @@ The gateway exposes following HTTP endpoints to clients:
 - **DELETE** `/users/` [self delete user]<br/>
   Uses ID from the JWT to delete individual user data.
   Fetching an individual user using the ID taken from the token.
+
+### Chats 
+- **POST** `/chats/rooms/participants/:id` [add group participant]
+- **POST** `/chats/groups/` [create groups]
+- **GET** `/chats/rooms/user` [get rooms by user id]<br/>
+  Fetch the data of rooms where the user is a participant.
+- **PATCH** `/groups/self/participants/:id` [self update room participant]<br/>
+  An endpoint for group participants to update their own roles in the group.
+- **PATCH** `/groups/participants/:id` [update room participant]<br/>
+  An endpoint for group admins to update other participants role in the group.
+- **PATCH** `/groups/` [update room] `GROUP ADMIN ONLY`
+- **DELETE** `/groups/self/participant/:id` [self delete group participant]<br/>
+  An endpoint for group participants to delete themselves from the group.
+- **DELETE** `/groups/participants/:id` [delete group participant]<br/> `GROUP ADMIN ONLY`
+- **DELETE** `/groups/:id` [delete group] `GROUP ADMIN ONLY`
+  
