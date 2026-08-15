@@ -31,12 +31,16 @@ The exact communication mechanism depends on the service. HTTP/gRPC/message-base
 The gateway exposes following HTTP endpoints to clients:
 
 ### Users
-- POST `/users/login` [logging in]
-- POST `/users/` [user registration]
-- GET `/users/profile` [get profile]
-- GET `/users` [get users]
-- GET `/users/:id` [get users with ID]
-- PATCH `/users/` [update user]
-- DELETE `/users/` [delete user] 
-  Fetching an individual user using the ID taken from the token 
-- 
+- **POST** `/users/login` [logging in]
+- **POST** `/users/` [user registration]
+- **GET** `/users/profile` [get profile]<br/>
+  Uses ID from the JWT to fetch individual user data.
+- **GET** `/users` [get users]
+- **GET** `/users/:id` [get users with ID]<br/>
+  Uses ID from the param to fetch individual user data.
+- **PATCH** `/users/` [update user]
+- **DELETE** `/users/:id` [delete user by id]<br/>
+  Uses ID from the param to delete individual user data. Authorized for admins only.
+- **DELETE** `/users/` [self delete user]<br/>
+  Uses ID from the JWT to delete individual user data.
+  Fetching an individual user using the ID taken from the token.
