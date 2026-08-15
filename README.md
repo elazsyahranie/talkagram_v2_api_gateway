@@ -25,7 +25,7 @@ The gateway communicates with the following services:
 - **Chats Service** - Rooms, participants, messages and chat operations
 - **Media Service** - File/image uploads and media management
 
-The exact communication mechanism depends on the service. HTTP/gRPC/message-based communication may be used depending on the operation.
+The exact communication mechanism depends on the service. `HTTP/gRPC/message-based` communication may be used depending on the operation.
 
 ## HTTP API
 The gateway exposes following HTTP endpoints to clients:
