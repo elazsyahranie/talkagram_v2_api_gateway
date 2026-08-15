@@ -88,7 +88,7 @@ export class ChatsController {
     return result;
   }
 
-  @Post('/group')
+  @Post('/groups')
   @HttpCode(200)
   // @Public()
   async createGroup(
