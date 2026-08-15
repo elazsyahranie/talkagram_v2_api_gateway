@@ -33,6 +33,10 @@ The gateway exposes following HTTP endpoints to clients:
 ### Users
 - POST `/users/login` [logging in]
 - POST `/users/` [user registration]
-- POST `/users/profle` [get profile]
+- GET `/users/profile` [get profile]
+- GET `/users` [get users]
+- GET `/users/:id` [get users with ID]
+- PATCH `/users/` [update user]
+- DELETE `/users/` [delete user] 
   Fetching an individual user using the ID taken from the token 
 - 
