@@ -291,7 +291,6 @@ npm i
 The exact structure may differ depending on the framework and architecture.
 
 ## Error Handling
-
 The gateway should expose consistent HTTP errors to clients.
 
 Example:
@@ -304,3 +303,71 @@ Example:
 Internal service errors should not expose implementation details, database errors, or sensitive information to clients.
 
 While the services may return TCP or SocketIO error messages, the API Gateway would find any matching HTTP error code and messages that would be sent to the requesting client.
+
+## Development Guidelines
+Keep business logic out of the gateway.
+
+The gateway should primarily handle:
+```mermaid
+flowchart TD
+    Authentication[Authentication]
+    Authorization{Authorization}
+    Routing[Routing]
+    Communication[Communication]
+    Response[Response]
+
+    Authentication --> Authorization
+    Authentication --> Routing
+    Authorization --> Routing
+
+    Routing --> Communication
+    Communication --> Response
+```
+Business rules should remain inside the service responsible for the relevant domain.
+
+For example:
+```mermaid
+flowchart TD
+    Gateway[API Gateway]
+    Request["Record this Message"]
+    Service[Messaging Service]
+    Validate[Validation]
+    Store[Store message]
+    Response[Send response]
+
+    Gateway --> Request
+    Request --> Service
+    Service --> Validate
+    Validate --> Store
+    Store --> Response
+```
+The gateway should not determine whether a user is allowed to send a message to a particular room.
+
+## Running the Complete System
+The API Gateway depends on the backend services being available.
+
+A typical local development environment may look like (note that these are not representative of the ports of the original services):
+```
+API Gateway       : 3000
+User Service      : 3002
+Chat Service      : 3003
+Media Service     : 3004
+```
+Start the required services before starting the gateway.
+
+## Production Considerations
+Before deploying to production, configure:
+
+- Secure JWT/cookie configuration
+- HTTPS
+- CORS
+- Rate limiting
+- Request timeouts
+- Logging
+- Health checks
+- Service discovery/configuration
+- WebSocket connection limits
+- Graceful shutdown
+- Monitoring and metrics
+
+Never expose internal microservice ports directly to public clients unless there is a specific architectural reason to do so.
