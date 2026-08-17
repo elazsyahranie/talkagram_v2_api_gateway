@@ -3,7 +3,7 @@
 
 The API Gateway is the entry point for clients communicating with the chat application's backend services.
 
-It is responsible for handling incoming HTTP connections, authenticating users, routing requests to the appropriate microservices, and providing a unified API for the frontend. While the application uses `Socket.io` to handle realtime data exchanges (especially for realtime chats), the `Socket.io` is handled on the chats service to prevent bottleneck on the API Gateway, especially during high traffic.
+It is responsible for handling incoming HTTP connections, authenticating users, routing requests to the appropriate microservices, and providing a unified API for the frontend. While the application uses [Socket.io](https://github.com/socketio/socket.IO) to handle realtime data exchanges (especially for realtime chats), the [Socket.io](https://github.com/socketio/socket.IO) is handled on the chats service to prevent bottleneck on the API Gateway, especially during high traffic.
 
 ## Responsibilities
 The API Gateway handles:
@@ -25,20 +25,22 @@ The gateway communicates with the following services:
 - **Chats Service** - Rooms, participants, messages and chat operations
 - **Media Service** - File/image uploads and media management
 
-While the API Gateway exposes HTTP endpoints to the authorized clients, the gateway and other services communicate with each other using the `TCP (Transmission Control Protocol)`, a built-in transfer layer option for `NestJS` microservices. 
+While the API Gateway exposes HTTP endpoints to the authorized clients, the gateway and other services communicate with each other using the `TCP (Transmission Control Protocol)`, a built-in transfer layer option for [NestJS](https://github.com/nestjs/nest) microservices. Currently, however, there is one exception to this: API Gateway uses HTTP instead of TCP to communicate with Service Media
 
 ## HTTP API
 The gateway exposes following HTTP endpoints to clients:
 
 ### Users
 - **POST** `/users/login` [logging in]
-- **POST** `/users/` [user registration]
+- **POST** `/users/` [user registration]<br/>
+  Can also send request to the POST endpoint `/user-images/:id` in the Service Media to store user images (profile, header, or both) if the user also include the image. 
 - **GET** `/users/profile` [get profile]<br/>
   An endpoint to fetch user data using an ID from the JWT.
 - **GET** `/users` [get users]
 - **GET** `/users/:id` [get users with ID]<br/>
   An endpoint to fetch user data using an ID from the param.
-- **PATCH** `/users/` [update user]
+- **PATCH** `/users/` [update user]<br/>
+  Can also send request to the PATCH endpoint `/user-images/:id` in the Service Media to store new user images (profile, header, or both) if the user also include the image.
 - **DELETE** `/users/:id` [delete user by id] `ADMIN ONLY`<br/>
   An endpoint for the admin to delete an individual user.
 - **DELETE** `/users/` [self delete user]<br/>
