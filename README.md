@@ -1,5 +1,5 @@
 # API Gateway
-🚧 *This service is currently under development*
+🚧 ***This service is currently under development.** Its architecture, APIs, features, and implementation details may change as development progresses.*
 
 The API Gateway is the entry point for clients communicating with the chat application's backend services.
 
