@@ -289,3 +289,18 @@ npm i
 ```
 
 The exact structure may differ depending on the framework and architecture.
+
+## Error Handling
+
+The gateway should expose consistent HTTP errors to clients.
+
+Example:
+```
+{
+  "statusCode": 401,
+  "message": "Unauthorized"
+}
+```
+Internal service errors should not expose implementation details, database errors, or sensitive information to clients.
+
+While the services may return TCP or SocketIO error messages, the API Gateway would find any matching HTTP error code and messages that would be sent to the requesting client.
