@@ -58,6 +58,94 @@ The gateway exposes following HTTP endpoints to clients:
 - **PATCH** `/groups/` [update room] `GROUP ADMIN ONLY`
 - **DELETE** `/groups/self/participant/:id` [self delete group participant]<br/>
   An endpoint for group participants to delete themselves from the group.
-- **DELETE** `/groups/participants/:id` [delete group participant] `GROUP ADMIN ONLY` <br/> 
+- **DELETE** `/groups/participants/:id` [delete group participant] `GROUP ADMIN ONLY` <br/>
 - **DELETE** `/groups/:id` [delete group] `GROUP ADMIN ONLY`
+
+The gateway forwards requests to the appropriate internal service. For example:
+```mermaid
+flowchart TD
+    Client[Authorized Client]
+    Gateway[API Gateway]
+    Service[Backend Service]
+    Database[Database]
+
+    Client --> Gateway
+    Gateway --> Service
+    Service --> Database
+```
   
+## Authentication and Authorization
+Most endpoints require a valid authentication token, using a JWT token like: `Bearer <token>`. The token contains at least two data: `id` and `role`. The `role` data is required for several endpoints that are authorized for system admins only.  
+
+Example:
+```mermaid
+flowchart TD
+    Client[Authorized Client]
+    Gateway[API Gateway]
+    Auth{Validate JWT}
+    Authorization{Authorization required?}
+    CheckPermission{Check permission}
+    Service[Backend Service]
+    Unauthorized[401 Unauthorized]
+    Forbidden[403 Forbidden]
+
+    Client -->|Request + JWT| Gateway
+    Gateway --> Auth
+
+    Auth -->|Invalid| Unauthorized
+    Auth -->|Valid| Authorization
+
+    Authorization -->|No| Service
+    Authorization -->|Yes| CheckPermission
+
+    CheckPermission -->|Denied| Forbidden
+    CheckPermission -->|Allowed| Service
+```
+
+For browser-based authentication, an `HttpOnly` cookie may be used instead (although this is yet to be implemented).
+
+Authentication should be centralized at the gateway where possible, while services should still enforce authorization rules for operations they own.
+
+## Environment Variables 
+Each services contain the environment variables in a file named `.env`. It's neccesary to include the `.env` into the `.gitignore` file, especially when the repository is public to prevent any sensitive information or data from getting exposed.
+
+The API Gateway `.env` file contain the following variables:
+```
+PORT=
+PROJECT_URL=
+
+USERS_SERVICE_HOST=
+USERS_SERVICE_PORT=
+
+MEDIA_SERVICE_HOST=
+MEDIA_SERVICE_PORT=
+
+MEDIA_SERVICE_HTTP_PORT=
+MEDIA_SERVICE_HTTP_URL=
+
+CHATS_SERVICE_HOST=
+CHATS_SERVICE_PORT=
+
+TOKEN_SECRET_KEY=
+TOKEN_EXPIRES=
+
+ENVIRONMENT=
+
+REDIS_HOST=
+REDIS_PORT=
+
+# This was inserted by `prisma init`:
+# Environment variables declared in this file are NOT automatically loaded by Prisma.
+# Please add `import "dotenv/config";` to your `prisma.config.ts` file, or use the Prisma CLI with Bun
+# to load environment variables from .env files: https://pris.ly/prisma-config-env-vars.
+
+# Prisma supports the native connection string format for PostgreSQL, MySQL, SQLite, SQL Server, MongoDB and CockroachDB.
+# See the documentation for all the connection string options: https://pris.ly/d/connection-strings
+
+# The following `prisma+postgres` URL is similar to the URL produced by running a local Prisma Postgres 
+# server with the `prisma dev` CLI command, when not choosing any non-default ports or settings. The API key, unlike the 
+# one found in a remote Prisma Postgres URL, does not contain any sensitive information.
+
+# DATABASE_URL=
+DATABASE_URL=
+```
