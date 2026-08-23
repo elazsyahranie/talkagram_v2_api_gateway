@@ -3,7 +3,7 @@
 
 The API Gateway is the entry point for clients communicating with the chat application's backend services.
 
-It is responsible for handling incoming HTTP connections, authenticating users, routing requests to the appropriate microservices, and providing a unified API for the frontend. While the application uses [Socket.io](https://github.com/socketio/socket.IO) to handle realtime data exchanges (especially for realtime chats), the [Socket.io](https://github.com/socketio/socket.IO) is handled on the chats service to prevent bottleneck on the API Gateway, especially during high traffic.
+It is responsible for handling incoming HTTP connections, authenticating users, routing requests to the appropriate microservices, and providing a unified API for the frontend.
 
 ## Responsibilities
 The API Gateway handles:
@@ -14,6 +14,8 @@ The API Gateway handles:
 - Communication with backend microservices
 - Error handling and response normalization
 - Request validation where appropriate
+
+> **Note**: Socket.IO connections are handled by the Chat Service rather than the API Gateway. This keeps long-lived real-time connections separate from API routing and allows the Chat Service to scale independently.
 
 The gateway should not contain business logic that belongs to individual services.
 
