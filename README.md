@@ -30,26 +30,28 @@ The gateway communicates with the following services:
 While the API Gateway exposes HTTP endpoints to the authorized clients, the gateway and other services communicate with each other using the `TCP (Transmission Control Protocol)`, a built-in transfer layer option for [NestJS](https://github.com/nestjs/nest) microservices. Currently, however, there is one exception to this: API Gateway uses HTTP instead of TCP to communicate with Service Media, especially for any requests related to file uploading or fetching.
 
 ## HTTP API
-The gateway exposes following HTTP endpoints to clients:
+> **Authentication:** All endpoints require authentication by default. Endpoints that do not require authentication are marked as `public`.
+The gateway exposes the following HTTP endpoints to clients.
 
 ### Users
-- **POST** `/users/login`  
+- **POST** `/users/login` - `PUBLIC`<br/>
   Authenticate a user.
-- **POST** `/users`  
+- **POST** `/users` - `PUBLIC` <br/>
   Register a new user. If profile and/or header images are included, the API Gateway also forwards them to the Media Service through `POST /user-images/:id`.
-- **GET** `/users/profile`  
+- **GET** `/users/profile`<br/>
   Fetch the authenticated user's own data.
-- **GET** `/users`  
+- **GET** `/users`<br/>
   Fetch a list of users.
-- **GET** `/users/:id`  
+- **GET** `/users/:id`<br/> 
   Fetch a user's data by ID.
-- **PATCH** `/users`  
+- **PATCH** `/users`<br/> 
   Update the authenticated user's own data. If new profile and/or header images are included, the API Gateway also forwards them to the Media Service through `PATCH /user-images/:id`.
-- **DELETE** `/users/:id`  
+- **DELETE** `/users/:id`<br/>
   Delete a user's data by ID - `ADMIN ONLY`
-- **DELETE** `/users`  
+- **DELETE** `/users`<br/>
   Delete the authenticated user's own account.
-  
+
+[PROCEED HERE]
 ### Chats 
 - **POST** `/chats/rooms/participants/:id` [add group participant]
 - **POST** `/chats/groups/` [create groups]
