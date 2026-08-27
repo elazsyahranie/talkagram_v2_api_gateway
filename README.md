@@ -27,7 +27,7 @@ The gateway communicates with the following services:
 - **Chats Service** - Rooms, participants, messages and chat operations
 - **Media Service** - File/image uploads and media management
 
-While the API Gateway exposes HTTP endpoints to the authorized clients, the gateway and other services communicate with each other using the `TCP (Transmission Control Protocol)`, a built-in transfer layer option for [NestJS](https://github.com/nestjs/nest) microservices. Currently, however, there is one exception to this: API Gateway uses HTTP instead of TCP to communicate with Service Media
+While the API Gateway exposes HTTP endpoints to the authorized clients, the gateway and other services communicate with each other using the `TCP (Transmission Control Protocol)`, a built-in transfer layer option for [NestJS](https://github.com/nestjs/nest) microservices. Currently, however, there is one exception to this: API Gateway uses HTTP instead of TCP to communicate with Service Media, especially for any requests related to file uploading or fetching.
 
 ## HTTP API
 The gateway exposes following HTTP endpoints to clients:
