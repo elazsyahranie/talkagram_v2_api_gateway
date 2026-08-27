@@ -33,21 +33,23 @@ While the API Gateway exposes HTTP endpoints to the authorized clients, the gate
 The gateway exposes following HTTP endpoints to clients:
 
 ### Users
-- **POST** `/users/login` [logging in]
-- **POST** `/users/` [user registration]<br/>
-  Can also send request to the POST endpoint `/user-images/:id` in the Service Media to store user images (profile, header, or both) if the user also include the image. 
-- **GET** `/users/profile` [get profile]<br/>
-  An endpoint to fetch user data using an ID from the JWT.
-- **GET** `/users` [get users]
-- **GET** `/users/:id` [get users with ID]<br/>
-  An endpoint to fetch user data using an ID from the param.
-- **PATCH** `/users/` [update user]<br/>
-  Can also send request to the PATCH endpoint `/user-images/:id` in the Service Media to store new user images (profile, header, or both) if the user also include the image.
-- **DELETE** `/users/:id` [delete user by id] `ADMIN ONLY`<br/>
-  An endpoint for the admin to delete an individual user.
-- **DELETE** `/users/` [self delete user]<br/>
-  An endpoint for a user to delete themselves.
-
+- **POST** `/users/login`  
+  Authenticate a user.
+- **POST** `/users`  
+  Register a new user. If profile and/or header images are included, the API Gateway also forwards them to the Media Service through `POST /user-images/:id`.
+- **GET** `/users/profile`  
+  Fetch the authenticated user's own data.
+- **GET** `/users`  
+  Fetch a list of users.
+- **GET** `/users/:id`  
+  Fetch a user's data by ID.
+- **PATCH** `/users`  
+  Update the authenticated user's own data. If new profile and/or header images are included, the API Gateway also forwards them to the Media Service through `PATCH /user-images/:id`.
+- **DELETE** `/users/:id`  
+  Delete a user's data by ID - `ADMIN ONLY`
+- **DELETE** `/users`  
+  Delete the authenticated user's own account.
+  
 ### Chats 
 - **POST** `/chats/rooms/participants/:id` [add group participant]
 - **POST** `/chats/groups/` [create groups]
