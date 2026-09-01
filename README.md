@@ -31,6 +31,8 @@ While the API Gateway exposes HTTP endpoints to the authorized clients, the gate
 
 ## HTTP API
 > **Authentication:** All endpoints require authentication by default. Endpoints that do not require authentication are marked as `public`.
+>
+> **Authorization:** Some endpoints have additional authorization requirements. These are marked accordingly. Authorization requirements may be enforced by the API Gateway or by the downstream service handling the request.
 The gateway exposes the following HTTP endpoints to clients.
 
 ### Users
@@ -51,21 +53,25 @@ The gateway exposes the following HTTP endpoints to clients.
 - **DELETE** `/users`<br/>
   Delete the authenticated user's own account.
 
-[PROCEED HERE]
 ### Chats 
-- **POST** `/chats/rooms/participants/:id` [add group participant]
-- **POST** `/chats/groups/` [create groups]
-- **GET** `/chats/rooms/user` [get rooms by user id]<br/>
-  Fetch the data of rooms where the user is a participant.
-- **PATCH** `/groups/self/participants/:id` [self update room participant]<br/>
-  An endpoint for group participants to update their own roles in the group.
-- **PATCH** `/groups/participants/:id` [update room participant]<br/>
-  An endpoint for group admins to update other participants role in the group.
-- **PATCH** `/groups/` [update room] `GROUP ADMIN ONLY`
-- **DELETE** `/groups/self/participant/:id` [self delete group participant]<br/>
-  An endpoint for group participants to delete themselves from the group.
-- **DELETE** `/groups/participants/:id` [delete group participant] `GROUP ADMIN ONLY` <br/>
-- **DELETE** `/groups/:id` [delete group] `GROUP ADMIN ONLY`
+- **POST** `/chats/rooms/participants/:id`<br/>
+  Create a group chat.
+- **POST** `/chats/groups/`<br/>
+  Add a participant to a group - `GROUP ADMIN ONLY`.
+- **GET** `/chats/rooms/user`<br/>
+  Fetch rooms where the user is a participant.
+- **PATCH** `/groups/self/participants/:id`<br/>
+  Allow a group participant to update their own role.
+- **PATCH** `/groups/participants/:id`<br/>
+  Update other participants' role - `GROUP ADMIN ONLY`.
+- **PATCH** `/groups/`<br/>
+  Update a group chat - `GROUP ADMIN ONLY`
+- **DELETE** `/groups/self/participant/:id`<br/>
+  Allow a group participant to delete themselves from the group.
+- **DELETE** `/groups/participants/:id`<br/>
+  Delete another participant.
+- **DELETE** `/groups/:id`<br/>
+  Delete a group chat - `GROUP ADMIN ONLY`.
 
 The gateway forwards requests to the appropriate internal service. For example:
 ```mermaid
