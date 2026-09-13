@@ -266,3 +266,18 @@ Before deploying to production, configure:
 - Monitoring and metrics
 
 Never expose internal microservice ports directly to public clients unless there is a specific architectural reason to do so.
+
+### Secrets Management
+Sensitive credentials such as JWT secrets, API keys, database credentials, and other secrets should never be committed to the repository.
+
+In production, secrets should be provided through environment variables or a dedicated secrets-management system. Credentials should also be rotated periodically and granted only the permissions required by the service.
+
+### Logging
+The service should provide structured logs for important events such as:
+
+- HTTP requests
+- Authentication failures
+- Unexpected exceptions
+
+### Health Checks
+A production deployment should expose a health-check mechanism so that the deployment platform can determine whether the Api Gateway is healthy.
