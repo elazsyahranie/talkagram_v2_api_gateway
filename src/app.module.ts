@@ -17,6 +17,7 @@ import { RedisModule } from './redis.module';
 import { HttpModule } from '@nestjs/axios';
 // import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ChatsModule } from './chats/chats.module';
+import { MediaModule } from './media/media.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { ChatsModule } from './chats/chats.module';
     AuthModule,
     RedisModule,
     ChatsModule,
+    MediaModule,
   ],
   controllers: [AppController],
   providers: [
