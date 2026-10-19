@@ -40,29 +40,18 @@ export class MediaController {
     @Inject('USERS_SERVICE') private readonly userClient: ClientProxy,
   ) {}
 
-  @Post('/images/chat')
+  @Post('/files/chat')
   @HttpCode(201)
-  @UseInterceptors(FilesInterceptor('images', 10))
-  async uploadChatImages(
-    @Body() request: UploadChatImagesDto,
-    @UploadedFiles() images: Express.Multer.File[],
+  @UseInterceptors(FilesInterceptor('files', 10))
+  async uploadAttachmentFiles(
+    // @Body() request: UploadChatImagesDto,
+    @UploadedFiles() files: Express.Multer.File[],
     @CurrentUser()
     user: {
       id: string;
-      // email: string
     },
   ) {
-    // console.dir(request, { depth: null });
-    // console.dir(image, { depth: null });
-
     /* 
-      1) Buat dulu chat nya, tambahkan type 'image', dan isi 'chat' nya kosong.
-         Kirim data 'room_id' dan 'userId' 
-      2) Nanti sudah dapat ID room dan chat nya, baru kita upload gambarnya beserta ID dari chat nya
-    */
-
-    /* 
-      GANTI AJA CARANYA PAKAI YANG INI 
       1) Kirim dulu file nya, nanti function nya akan return ID 
       2) Lewat SocketIO, user akan mengirim kan ID dari gambar atau media beserta chat_id nya
       3) Lalu di Media Service, akan kita tambahkan ID chat dari gambar yang terkirim tersebut pada gambar atau file yang terkirim
@@ -72,38 +61,45 @@ export class MediaController {
       2) Kita buatkan Cron Job atau background worker untuk menghapus gambar-gambar yang memang tidak ada data uploader atau chat_id nya
     */
 
-    /* 
-      We make the 'chat' as empty string as of now,
-      since we currenty need a chat_id for the image
-      data
-    */
-    // const result = await firstValueFrom(
-    //   this.chatClient
-    //     .send(
-    //       { cmd: 'addChat' },
-    //       { room: request.room, sender: user.id, chat: '' },
-    //     )
-    //     .pipe(
-    //       timeout(5000),
-    //       catchError((error) => {
-    //         return throwError(
-    //           () =>
-    //             new HttpException(
-    //               error.message || USERS_SERVICE_UNAVAILABE_OR_CRASHED,
-    //               error.code || HttpStatus.SERVICE_UNAVAILABLE,
-    //             ),
-    //         );
-    //       }),
-    //     ),
-    // );
-
-    if (images.length) {
+    let imageIds: string[] = [];
+    if (files.length) {
       const formData = new FormData();
-      images.forEach((image) => {
-        formData.append('images', image.buffer, image.originalname);
+      files.forEach((file) => {
+        formData.append('files', file.buffer, file.originalname);
       });
+
+      // console.dir(formData, { depth: null });
+      const result = await firstValueFrom(
+        this.httpService
+          .post(
+            `${MEDIA_SERVICE_HTTP_URL}/attachment-files/${user.id}`,
+            formData,
+            {
+              headers: formData.getHeaders(),
+            },
+          )
+          .pipe(
+            timeout(5000),
+            catchError((error) => {
+              return throwError(
+                () =>
+                  new HttpException(
+                    error.message || MEDIA_SERVICE_UNAVAILABE_OR_CRASHED,
+                    error.code || HttpStatus.SERVICE_UNAVAILABLE,
+                  ),
+              );
+            }),
+          ),
+      );
+
+      this.logger.log(
+        `User ${user.id} uploaded ${files.length} files for attachment!`,
+        'MediaService',
+      );
+
+      imageIds = result.data;
     }
 
-    return { status: 'success' };
+    return { status: 'success', imageIds };
   }
 }
