@@ -40,7 +40,7 @@ export class MediaController {
     @Inject('USERS_SERVICE') private readonly userClient: ClientProxy,
   ) {}
 
-  @Post('/files/chat')
+  @Post('/attachment-files')
   @HttpCode(201)
   @UseInterceptors(FilesInterceptor('files', 10))
   async uploadAttachmentFiles(
@@ -72,7 +72,7 @@ export class MediaController {
       const result = await firstValueFrom(
         this.httpService
           .post(
-            `${MEDIA_SERVICE_HTTP_URL}/attachment-files/${user.id}`,
+            `${MEDIA_SERVICE_HTTP_URL}/attachment-files/upload/${user.id}`,
             formData,
             {
               headers: formData.getHeaders(),
