@@ -1,11 +1,13 @@
 # API Gateway
-🚧 ***This service is currently under development.** Its architecture, APIs, features, and implementation details may change as development progresses.*
+
+🚧 **\*This service is currently under development.** Its architecture, APIs, features, and implementation details may change as development progresses.\*
 
 The API Gateway is the entry point for clients communicating with the chat application's backend services.
 
 It is responsible for handling incoming HTTP connections, authenticating users, routing requests to the appropriate microservices, and providing a unified API for the frontend.
 
 ## Responsibilities
+
 The API Gateway handles:
 
 - HTTP request routing
@@ -19,10 +21,12 @@ The API Gateway handles:
 
 The gateway should not contain business logic that belongs to individual services.
 
-For example, the gateway may authenticate a request and forward a `get_rooms` operation to the `chats_service`, but the `chats_service` is responsible for deciding how the room would be fetched to the gateway, and thus to the client/frontend. As a result, all the modules in gateway does not contain `service.ts` files that typically store database level logic, or the database configurations. 
+For example, the gateway may authenticate a request and forward a `get_rooms` operation to the `chats_service`, but the `chats_service` is responsible for deciding how the room would be fetched to the gateway, and thus to the client/frontend. As a result, all the modules in gateway does not contain `service.ts` files that typically store database level logic, or the database configurations.
 
-## Services 
+## Services
+
 The gateway communicates with the following services:
+
 - **User Services** - Authentication, user profiles and user-related operations
 - **Chats Service** - Rooms, participants, messages and chat operations
 - **Media Service** - File/image uploads and media management
@@ -30,12 +34,14 @@ The gateway communicates with the following services:
 While the API Gateway exposes HTTP endpoints to the authorized clients, the gateway and other services communicate with each other using the `TCP (Transmission Control Protocol)`, a built-in transfer layer option for [NestJS](https://github.com/nestjs/nest) microservices. Currently, however, there is one exception to this: API Gateway uses HTTP instead of TCP to communicate with Service Media, especially for any requests related to file uploading or fetching.
 
 ## HTTP API
+
 > **Authentication:** All endpoints require authentication by default. Endpoints that do not require authentication are marked as `public`.
 >
 > **Authorization:** Some endpoints have additional authorization requirements. These are marked accordingly. Authorization requirements may be enforced by the API Gateway or by the downstream service handling the request.
-The gateway exposes the following HTTP endpoints to clients.
+> The gateway exposes the following HTTP endpoints to clients.
 
 ### Users
+
 - **POST** `/users/login` - `PUBLIC`<br/>
   Authenticate a user.
 - **POST** `/users` - `PUBLIC` <br/>
@@ -44,16 +50,17 @@ The gateway exposes the following HTTP endpoints to clients.
   Fetch the authenticated user's own data.
 - **GET** `/users`<br/>
   Fetch a list of users.
-- **GET** `/users/:id`<br/> 
+- **GET** `/users/:id`<br/>
   Fetch a user's data by ID.
-- **PATCH** `/users`<br/> 
+- **PATCH** `/users`<br/>
   Update the authenticated user's own data. If new profile and/or header images are included, the API Gateway also forwards them to the Media Service through `PATCH /user-images/:id`.
 - **DELETE** `/users/:id`<br/>
   Delete a user's data by ID - `ADMIN ONLY`
 - **DELETE** `/users`<br/>
   Delete the authenticated user's own account.
 
-### Chats 
+### Chats
+
 - **POST** `/chats/rooms/participants/:id`<br/>
   Create a group chat.
 - **POST** `/chats/groups/`<br/>
@@ -73,7 +80,13 @@ The gateway exposes the following HTTP endpoints to clients.
 - **DELETE** `/groups/:id`<br/>
   Delete a group chat - `GROUP ADMIN ONLY`.
 
+### Media
+
+- **POST** `/media/attachment-files`<br/>
+  Upload a file that can later be associated with a chat.
+
 The gateway forwards requests to the appropriate internal service. For example:
+
 ```mermaid
 flowchart TD
     Client[Authorized Client]
@@ -85,11 +98,13 @@ flowchart TD
     Gateway --> Service
     Service --> Database
 ```
-  
+
 ## Authentication and Authorization
-Most endpoints require a valid authentication token, using a JWT token like: `Bearer <token>`. The token contains at least two data: `id` and `role`. The `role` data is required for several endpoints that are authorized for system admins only.  
+
+Most endpoints require a valid authentication token, using a JWT token like: `Bearer <token>`. The token contains at least two data: `id` and `role`. The `role` data is required for several endpoints that are authorized for system admins only.
 
 Example:
+
 ```mermaid
 flowchart TD
     Client[Authorized Client]
@@ -118,10 +133,12 @@ For browser-based authentication, an `HttpOnly` cookie may be used instead (alth
 
 Authentication should be centralized at the gateway where possible, while services should still enforce authorization rules for operations they own.
 
-## Environment Variables 
+## Environment Variables
+
 Each services contain the environment variables in a file named `.env`. It's neccesary to include the `.env` into the `.gitignore` file, especially when the repository is public to prevent any sensitive information or data from getting exposed.
 
 The API Gateway `.env` file contain the following variables:
+
 ```
 PORT=
 PROJECT_URL=
@@ -154,55 +171,66 @@ REDIS_PORT=
 # Prisma supports the native connection string format for PostgreSQL, MySQL, SQLite, SQL Server, MongoDB and CockroachDB.
 # See the documentation for all the connection string options: https://pris.ly/d/connection-strings
 
-# The following `prisma+postgres` URL is similar to the URL produced by running a local Prisma Postgres 
-# server with the `prisma dev` CLI command, when not choosing any non-default ports or settings. The API key, unlike the 
+# The following `prisma+postgres` URL is similar to the URL produced by running a local Prisma Postgres
+# server with the `prisma dev` CLI command, when not choosing any non-default ports or settings. The API key, unlike the
 # one found in a remote Prisma Postgres URL, does not contain any sensitive information.
 
 # DATABASE_URL=
 DATABASE_URL=
 ```
 
-## Installation 
+## Installation
+
 This project uses `npm` as a package manager.
 
-Install the dependencies by using 
+Install the dependencies by using
+
 ```
 npm install
 ```
-or 
+
+or
+
 ```
 npm i
 ```
 
 ### Start the app
+
 - `npm run start` Start the app.
 - `npm run start:dev` Start the app in `dev` mode.
 - `npm run start:debug` Debugging the app in watch mode.
 - `npm run start:prod` Start in production mode.
 
 ### Test the app
+
 - `npm run test` Run unit test
 - `npm run test:watch` Run the test in watch mode
 - `npm run test:e2e` Run end-to-end tests
 
 ## Error Handling
+
 The gateway should expose consistent HTTP errors to clients.
 
 Example:
+
 ```
 {
   "statusCode": 401,
   "message": "Unauthorized"
 }
 ```
+
 Internal service errors should not expose implementation details, database errors, or sensitive information to clients.
 
 While the services may return TCP or SocketIO error messages, the API Gateway would find any matching HTTP error code and messages that would be sent to the requesting client.
 
 ## Development Guidelines
+
 Keep business logic out of the gateway.
 
 The gateway should primarily handle:
+
 ```mermaid
 flowchart TD
     Authentication[Authentication]
@@ -218,9 +246,11 @@ flowchart TD
     Routing --> Communication
     Communication --> Response
 ```
+
 Business rules should remain inside the service responsible for the relevant domain.
 
 For example:
+
 ```mermaid
 flowchart TD
     Gateway[API Gateway]
@@ -236,21 +266,26 @@ flowchart TD
     Validate --> Store
     Store --> Response
 ```
+
 The gateway should not determine whether a user is allowed to send a message to a particular room.
 
 ## Running the Complete System
+
 The API Gateway depends on the backend services being available.
 
 A typical local development environment may look like (note that these are not representative of the ports of the original services):
+
 ```
 API Gateway       : 3000
 User Service      : 3002
 Chat Service      : 3003
 Media Service     : 3004
 ```
+
 Start the required services before starting the gateway.
 
 ## Production Considerations
+
 Before deploying to production, configure:
 
 - Secure JWT/cookie configuration
@@ -268,11 +303,13 @@ Before deploying to production, configure:
 Never expose internal microservice ports directly to public clients unless there is a specific architectural reason to do so.
 
 ### Secrets Management
+
 Sensitive credentials such as JWT secrets, API keys, database credentials, and other secrets should never be committed to the repository.
 
 In production, secrets should be provided through environment variables or a dedicated secrets-management system. Credentials should also be rotated periodically and granted only the permissions required by the service.
 
 ### Logging
+
 The service should provide structured logs for important events such as:
 
 - HTTP requests
@@ -280,4 +317,5 @@ The service should provide structured logs for important events such as:
 - Unexpected exceptions
 
 ### Health Checks
+
 A production deployment should expose a health-check mechanism so that the deployment platform can determine whether the Api Gateway is healthy.
