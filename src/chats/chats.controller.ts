@@ -26,6 +26,7 @@ import {
   CHATS_SERVICE_UNAVAILABLE_OR_CRASHED,
   MEDIA_SERVICE_HTTP_URL,
   MEDIA_SERVICE_UNAVAILABE_OR_CRASHED,
+  SUCCESS,
   USERS_SERVICE_UNAVAILABE_OR_CRASHED,
 } from 'src/common/constants';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
@@ -136,6 +137,36 @@ export class ChatsController {
     const result: GetRoomsResult = await firstValueFrom(
       this.chatsClient
         .send({ cmd: 'chatsGetRoomsByUser' }, { user: id, order, page, limit })
+        .pipe(
+          timeout(5000),
+          catchError((error) => {
+            throw new HttpException(
+              error.message || CHATS_SERVICE_UNAVAILABLE_OR_CRASHED,
+              error.code || HttpStatus.SERVICE_UNAVAILABLE,
+            );
+          }),
+        ),
+    );
+
+    // return request;
+    return result;
+  }
+
+  @Get('/rooms/:id')
+  @HttpCode(200)
+  async getRoomById(
+    @CurrentUser()
+    user: {
+      id: string;
+      // email: string
+    },
+    @Param('id') chatId: string,
+  ) {
+    const userId = user.id;
+
+    const result = await firstValueFrom(
+      this.chatsClient
+        .send({ cmd: 'chatsGetRoomById' }, { chat_id: chatId, user_id: userId })
         .pipe(
           timeout(5000),
           catchError((error) => {
