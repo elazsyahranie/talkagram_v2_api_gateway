@@ -20,8 +20,8 @@
   > phone: `text`</br>
   > email: `text`</br>
   > role: `Admin` | `User`</br>
-  > profile: `File`</br>
-  > header: `File`</br>
+  > profile: `File (".jpeg", ".png", or "./jpg")`</br>
+  > header: `File (".jpeg", ".png", or "./jpg")`</br>
 - **GET** `/users/profile`<br/>
   Request type: `none`
   Authorization: `Bearer token`<br/>
@@ -45,6 +45,8 @@
   > email: `text`</br>
   > role: `text` </br>
   > about: `text` </br>
+  > profile: `File (".jpeg", ".png", or "./jpg")`</br>
+  > header: `File (".jpeg", ".png", or "./jpg")`</br>
 - **DELETE** `/users/:id` - `ADMIN ONLY`<br/>
   Request type: `Params`
 - **DELETE** `/users`<br/>
