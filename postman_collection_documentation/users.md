@@ -1,16 +1,51 @@
+# Users
+
 - **POST** `/users/login` - `PUBLIC`<br/>
-  Authenticate a user.
+  Request type: `Body` - `raw {JSON}`<br/>
+  Authorization: `none`<br/>
+
+  > "phone": `string` <br/>
+  > "email": `string` <br/>
+  > "username": `string` <br/>
+  > "password": `string` <br/>
+
 - **POST** `/users` - `PUBLIC` <br/>
-  Register a new user. If profile and/or header images are included, the API Gateway also forwards them to the Media Service through `POST /user-images/:id`.
+  Request type: `Body` - `form-data`<br/>
+  Authorization: `none`<br/>
+  > first_name: `text`</br>
+  > middle_name: `text`</br>
+  > last_name: `text`</br>
+  > password: `text`</br>
+  > username: `text`</br>
+  > phone: `text`</br>
+  > email: `text`</br>
+  > role: `Admin` | `User`</br>
+  > profile: `File`</br>
+  > header: `File`</br>
 - **GET** `/users/profile`<br/>
-  Fetch the authenticated user's own data.
+  Request type: `none`
+  Authorization: `Bearer token`<br/>
 - **GET** `/users`<br/>
-  Fetch a list of users.
+  Request type: `Params`- `Query Params`<br/>
+  Authorization: `Bearer token`<br/>
+  > keywords: `text` </br>
+  > role: `Admin` | `User` </br>
+  > page: `text` </br>
+  > limit: `text` </br>
+  > order: `a-z` | `z-a` | `latest` | `oldest` </br>
 - **GET** `/users/:id`<br/>
-  Fetch a user's data by ID.
+  Request type: `Params`</br>
+  Authorization: `Bearer token`<br/>
 - **PATCH** `/users`<br/>
-  Update the authenticated user's own data. If new profile and/or header images are included, the API Gateway also forwards them to the Media Service through `PATCH /user-images/:id`.
-- **DELETE** `/users/:id`<br/>
-  Delete a user's data by ID - `ADMIN ONLY`
+  Request type: `Body` - `form-data`</br>
+  Authorization: `Bearer token`<br/>
+  > first_name: `text`<br/>
+  > middle_name: `text`<br/>
+  > last_name:`text`</br>
+  > email: `text`</br>
+  > role: `text` </br>
+  > about: `text` </br>
+- **DELETE** `/users/:id` - `ADMIN ONLY`<br/>
+  Request type: `Params`
 - **DELETE** `/users`<br/>
-  Delete the authenticated user's own account.
+  Request type: `none`
