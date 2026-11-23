@@ -210,6 +210,7 @@ export class UsersController {
     // @Req() req: any,
   ) {
     const { id } = user;
+    // const id = '839b2930-fe52-4787-b896-9536aab5968c';
 
     const result: GetUserResult = await firstValueFrom(
       this.userClient.send({ cmd: 'usersGetProfile' }, id).pipe(
@@ -239,13 +240,23 @@ export class UsersController {
           ),
       );
 
+      let userImagesModified: UserImagesResult[] = [];
+      if (userImages.length) {
+        userImages.map((obj: UserImagesResult) => {
+          const path = `${process.env.MEDIA_SERVICE_HTTP_URL}/${obj.path}`;
+
+          userImagesModified.push({ ...obj, path });
+        });
+      }
+
       this.logger.log(`Profile ${id} fetched`, 'UsersService');
 
-      return { ...result, data: { ...result.data, user_images: userImages } };
+      return {
+        ...result,
+        data: { ...result.data, user_images: userImagesModified },
+      };
     }
     // }
-
-    return result;
   }
 
   @Get()
@@ -310,7 +321,7 @@ export class UsersController {
 
         let findImagesModified: UserImagesResult[] = [];
         if (findImages.length) {
-          findImages.map((obj) => {
+          findImages.map((obj: UserImagesResult) => {
             const path = `${process.env.MEDIA_SERVICE_HTTP_URL}/${obj.path}`;
 
             findImagesModified.push({ ...obj, path });
@@ -375,9 +386,21 @@ export class UsersController {
           ),
       );
 
+      let userImagesModified: UserImagesResult[] = [];
+      if (userImages.length) {
+        userImages.map((obj: UserImagesResult) => {
+          const path = `${process.env.MEDIA_SERVICE_HTTP_URL}/${obj.path}`;
+
+          userImagesModified.push({ ...obj, path });
+        });
+      }
+
       this.logger.log(`User ${id} fetched`, 'UsersService');
 
-      return { ...result, data: { ...result.data, user_images: userImages } };
+      return {
+        ...result,
+        data: { ...result.data, user_images: userImagesModified },
+      };
     }
     // }
   }
@@ -412,7 +435,6 @@ export class UsersController {
     },
   ) {
     const user_id = user.id;
-    // const user_id = '0bdbac9a-8dee-4e1b-971d-3ba0bbcb30ba';
     if (updatedUser) {
       await firstValueFrom(
         this.userClient
