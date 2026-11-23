@@ -308,7 +308,16 @@ export class UsersController {
           (usrImg: UserImagesResult) => usrImg.user_id === obj.id,
         );
 
-        return { ...obj, user_images: findImages };
+        let findImagesModified: UserImagesResult[] = [];
+        if (findImages.length) {
+          findImages.map((obj) => {
+            const path = `${process.env.MEDIA_SERVICE_HTTP_URL}/${obj.path}`;
+
+            findImagesModified.push({ ...obj, path });
+          });
+        }
+
+        return { ...obj, user_images: findImagesModified };
       });
 
       this.logger.log(`Users fetched`, 'UsersService');
