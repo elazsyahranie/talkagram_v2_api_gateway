@@ -10,3 +10,6 @@ export const MEDIA_SERVICE_UNAVAILABE_OR_CRASHED =
 
 export const CHATS_SERVICE_UNAVAILABLE_OR_CRASHED =
   'Chats service unavailable or crashed';
+
+/* Success messages */
+export const SUCCESS = 'success';
