@@ -160,13 +160,27 @@ export class ChatsController {
       id: string;
       // email: string
     },
-    @Param('id') chatId: string,
+    @Param('id') roomId: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Query('order', new DefaultValuePipe('latest')) order: string,
+    @Query('keywords') keywords?: string,
   ) {
-    const userId = user.id;
+    const senderId = user.id;
 
     const result = await firstValueFrom(
       this.chatsClient
-        .send({ cmd: 'chatsGetRoomById' }, { chat_id: chatId, user_id: userId })
+        .send(
+          { cmd: 'chatsGetRoomById' },
+          {
+            room_id: roomId,
+            sender_id: senderId,
+            page,
+            limit,
+            order,
+            keywords,
+          },
+        )
         .pipe(
           timeout(5000),
           catchError((error) => {
